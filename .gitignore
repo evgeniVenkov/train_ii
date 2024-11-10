@@ -1,0 +1,4 @@
+.venv/
+train_pytorch/data/
+train_pytorch/mnist/
+train_pytorch/dataset/

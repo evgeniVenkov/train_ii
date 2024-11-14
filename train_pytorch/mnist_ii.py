@@ -1,5 +1,6 @@
 import torch
 import torchvision
+import torch.nn as nn
 
 from torchvision.datasets import ImageFolder
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -42,20 +43,21 @@ class MnistDataset(Dataset):
             sample = self.transform(sample)
         return sample, target
 
-path_test = r'C:\Users\admin\PycharmProjects\my_train_ii\train_pytorch\mnist\testing'
-path_train = os.path.join(os.path.dirname(__file__), r'mnist\training')
+def get_data():
+    path_test = r'C:\Users\admin\PycharmProjects\my_train_ii\train_pytorch\mnist\testing'
+    path_train = os.path.join(os.path.dirname(__file__), r'mnist\training')
 
 
-train_dataset = MnistDataset(path_train)
-test_dataset = MnistDataset(path_test)
+    train_dataset = MnistDataset(path_train)
+    test_dataset = MnistDataset(path_test)
 
-train_data, val_data = random_split(train_dataset, [0.8, 0.2])
+    train_data, val_data = random_split(train_dataset, [0.8, 0.2])
 
-train_loader = DataLoader(train_data, batch_size=16,shuffle=True)
-val_loader = DataLoader(val_data, batch_size=16, shuffle=False)
-test_Loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    train_loader = DataLoader(train_data, batch_size=16,shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=16, shuffle=False)
+    test_Loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
-
+    return train_loader, val_loader, test_Loader
 # print(len(train_data))
 # print(len(val_data))
 # print(len(test_dataset))
@@ -75,3 +77,26 @@ test_Loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 # for name, idx in train_dataset.class_to_idx.items():
 #     one_hot_vector = [(i == idx)*1 for i in range(10)]
 #     print(name, one_hot_vector)
+
+class my_model(nn.Module):
+    def __init__(self,input,output):
+        super().__init__()
+        self.layer1 = nn.Linear(input,128)
+        self.layer2 = nn.Linear(128,output)
+        self.act = nn.ReLU()
+
+    def forward(self,x):
+        x = self.layer1(x)
+        x = self.act(x)
+        out = self.layer2(x)
+
+        return out
+
+model = my_model(784,10)
+
+loss_fn = nn.CrossEntropyLoss()
+opt_class = torch.optim.Adam(model.parameters(), lr = 0.001)
+
+input = torch.rand([16,784],dtype=torch.float32)
+output = model(input)
+print(output.shape)

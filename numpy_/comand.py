@@ -114,5 +114,10 @@ arr = np.diag([1,2,3,4])
 #  [0 2 0 0]
 #  [0 0 3 0]
 #  [0 0 0 4]]
-
-print(arr)
+arr = np.empty([5,5], dtype = np.int32)
+new_arr = arr
+new_arr[0:1] = 0
+new_arr[-1:] = 0
+new_arr[:,0] = 0
+new_arr[:,-1] = 0
+print(new_arr)

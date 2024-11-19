@@ -114,10 +114,17 @@ arr = np.diag([1,2,3,4])
 #  [0 2 0 0]
 #  [0 0 3 0]
 #  [0 0 0 4]]
-arr = np.empty([5,5], dtype = np.int32)
-new_arr = arr
-new_arr[0:1] = 0
-new_arr[-1:] = 0
-new_arr[:,0] = 0
-new_arr[:,-1] = 0
-print(new_arr)
+arr = np.empty([5,3], dtype = np.int32)
+arr_1 = np.empty([4,2], dtype = np.int32)
+
+
+
+print(arr)
+
+min = np.min(arr)
+
+print(min)
+
+
+
+

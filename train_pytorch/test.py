@@ -1,52 +1,49 @@
-import os
-import json
+import torch
+
+l = [0,1,2,3,4,5,6,7,8,9]
+
+tensor = torch.tensor(l)
+tensor = torch.tensor(l,dtype = torch.float32)
+tensor = torch.tensor(l,dtype = torch.float32 , requires_grad = True)
+tensor_size = tensor.size()
+tesnor_dtype = tensor.dtype
+
+tensor_ones = torch.ones([2,4])
+tensor_zeros = torch.zeros_like(tensor_ones)
+
+new_tensor = tensor_ones[...,None]
+
+tensor = torch.rand(64,28,28)
+
+tensor = tensor[:,None,...]
+
+tensor_1 = torch.rand(64,20)
+tensor_2 = torch.rand(64,30)
+
+tensor = torch.cat([tensor_1,tensor_2], dim = 1)
 
 
-path = os.path.join(os.path.dirname(__file__),"dataset")
-print(path)
+batch_tensor = torch.ones(10,28,28,1)
 
-list_name = os.listdir(path)
+tensor = batch_tensor.view(batch_tensor.size(0),-1)
 
-
-print("coords.json" in list_name)
-
-with open(os.path.join(path, "coords.json"), "r") as file:
-    cords_dir = json.load(file)
-
-name = list_name[1]
-path = os.path.join(path, name)
-
-
-print(cords_dir[name])
-
+tensor = torch.tensor(([[17, 35],
+        [16, 24],
+        [36, 16],
+        [17, 22],
+        [31, 18]]))
+max = torch.argmax(tensor, dim=1)
 
 from torch.utils.data import Dataset
-from PIL import Image
-class My_class(Dataset):
-    def __init__(self, path, transform = None):
-        self.path = path
-        self.transform = transform
-
-        self.file_names = os.listdir(path)
-        if "coords.json" in self.file_names:
-            self.file_names.remove("coords.json")
-
-        self.len = len(self.file_names)
-
-        with open(os.path.join(self.path,"coords.json"), 'r') as file:
-            self.coords = json.load(file)
-
-    def __len__(self):
-        return self.len
-    def __getitem__(self,index):
-        file_name = self.file_names[index]
-        coords = self.coords[file_name]
-
-        img = Image.open(os.path.join(self.path,file_name))
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        return img, coords
+class myDataset(Dataset):
+        def __int__(self):
+                pass
+        def __len__(self):
+                pass
+        def __getitem__(self, index):
+                pass
 
 
+
+print(max, end = "\n-----------------\n")
+print(tensor_zeros)

@@ -20,36 +20,36 @@ y = torch.tensor([[0.],
 class XORModel(nn.Module):
     def __init__(self):
         super(XORModel, self).__init__()
-        self.fc1 = nn.Linear(2, 10)  # Первый слой: 2 входа, 5 нейронов в скрытом слое
-        self.fc2 = nn.Linear(10, 1)   # Второй слой: 5 входов, 1 выход
+        self.fc1 = nn.Linear(2, 10)
+        self.fc2 = nn.Linear(10, 1)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))  # Применяем ReLU к первому слою
-        x = torch.sigmoid(self.fc2(x))  # Применяем сигмоиду к выходному слою
+        x = torch.relu(self.fc1(x))
+        x = torch.sigmoid(self.fc2(x))
         return x
 
 # Создаем модель
 model = XORModel()
-criterion = nn.BCELoss()  # Функция потерь: бинарная кросс-энтропия
-optimizer = optim.Adam(model.parameters(), lr=0.1)  # Оптимизатор: Adam
+criterion = nn.BCELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.1)
 
 num_epochs = 100
 loss_arr = []
 
-# Обучение модели
+
 for epoch in range(num_epochs):
     model.train()
-    optimizer.zero_grad()  # Обнуляем градиенты
+    optimizer.zero_grad()
 
-    # Прямой проход
+
     output = model(X)
-    loss = criterion(output, y)  # Вычисляем потерю
+    loss = criterion(output, y)
 
-    # Обратный проход и оптимизация
+
     loss.backward()
     optimizer.step()
 
-    # Сохраняем потерю
+
     loss_arr.append(loss.item())
 
     if (epoch + 1) % 10 == 0:

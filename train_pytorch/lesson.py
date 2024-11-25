@@ -256,17 +256,18 @@ class MyModel01(nn.Module):
         out = self.linear2(out)
         return out
 
-model = MyModel01(15*15,10,2)
+# model = MyModel01(15*15,10,2)
+#
+# loss_model = nn.L1Loss()
+# opt = torch.optim.Adam(model.parameters(), lr = 0.1)
+# summary(model, input_size=(15*15,))
+#
+#
+# # tensor = torch.rand(1, 15*15)
+# # out = model(tensor)
+# print(f'vvvvvvvvvvvvvvvvvvvvv\n{model} \n -------------------------')  # Вывод формы результата
 
-loss_model = nn.L1Loss()
-opt = torch.optim.Adam(model.parameters(), lr = 0.1)
-summary(model, input_size=(15*15,))
-
-
-# tensor = torch.rand(1, 15*15)
-# out = model(tensor)
-print(f'vvvvvvvvvvvvvvvvvvvvv\n{model} \n -------------------------')  # Вывод формы результата
-
+print("CUDA доступен:" if torch.cuda.is_available() else "CUDA не доступен")
 
 
 

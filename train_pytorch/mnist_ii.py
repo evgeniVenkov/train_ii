@@ -1,16 +1,18 @@
 import torch
-import torchvision
+from torch.utils.data import Dataset, DataLoader, random_split
 import torch.nn as nn
 
+from torchvision.transform import v2
+import torchvision
 from torchvision.datasets import ImageFolder
-from torch.utils.data import Dataset, DataLoader, random_split
+
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from PIL import Image
 
 import os
 import json
 import numpy as np
-import matplotlib.pyplot as plt
-
-from PIL import Image
 
 class MnistDataset(Dataset):
     def __init__(self, path, transform=None):
@@ -42,7 +44,6 @@ class MnistDataset(Dataset):
         if self.transform is not None:
             sample = self.transform(sample)
         return sample, target
-
 def get_data():
     path_test = r'C:\Users\admin\PycharmProjects\my_train_ii\train_pytorch\mnist\testing'
     path_train = os.path.join(os.path.dirname(__file__), r'mnist\training')
@@ -58,6 +59,9 @@ def get_data():
     test_Loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
     return train_loader, val_loader, test_Loader
+
+train_data,val_data,test_data = get_data()
+
 # print(len(train_data))
 # print(len(val_data))
 # print(len(test_dataset))
@@ -93,7 +97,6 @@ class my_model(nn.Module):
         return out
 
 model = my_model(784,10)
-
 loss_fn = nn.CrossEntropyLoss()
 opt_class = torch.optim.Adam(model.parameters(), lr = 0.001)
 

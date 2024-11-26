@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 import torch.nn as nn
 
-from torchvision.transform import v2
+# from torchvision.transform import v2
 import torchvision
 from torchvision.datasets import ImageFolder
 
@@ -13,6 +13,8 @@ from PIL import Image
 import os
 import json
 import numpy as np
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MnistDataset(Dataset):
     def __init__(self, path, transform=None):
@@ -37,16 +39,20 @@ class MnistDataset(Dataset):
             self.len_dataset += len(file_list)
     def __len__(self):
         return self.len_dataset
-    def __getitem__(self,index):
+
+    def __getitem__(self, index):
         file_path, target = self.data_list[index]
-        sample = np.array(Image.open(file_path))
+        sample = np.array(Image.open(file_path).resize((28, 28)))
+        sample = torch.tensor(sample, dtype=torch.float32)
 
         if self.transform is not None:
             sample = self.transform(sample)
         return sample, target
+
+
 def get_data():
-    path_test = r'C:\Users\admin\PycharmProjects\my_train_ii\train_pytorch\mnist\testing'
-    path_train = os.path.join(os.path.dirname(__file__), r'mnist\training')
+    path_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\testing')
+    path_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\training')
 
 
     train_dataset = MnistDataset(path_train)
@@ -60,27 +66,7 @@ def get_data():
 
     return train_loader, val_loader, test_Loader
 
-train_data,val_data,test_data = get_data()
 
-# print(len(train_data))
-# print(len(val_data))
-# print(len(test_dataset))
-
-
-#
-# print(len(train_dataset), len(test_dataset))
-#
-# img, one_hot = train_dataset[35687]
-#
-# cls = train_dataset.classes[one_hot]
-# print(f"Class: {cls}")
-#
-# plt.imshow(img, cmap='gray')
-# plt.show()
-
-# for name, idx in train_dataset.class_to_idx.items():
-#     one_hot_vector = [(i == idx)*1 for i in range(10)]
-#     print(name, one_hot_vector)
 
 class my_model(nn.Module):
     def __init__(self,input,output):
@@ -96,9 +82,70 @@ class my_model(nn.Module):
 
         return out
 
-model = my_model(784,10)
+train_data,val_data,test_data = get_data()
+
+print(len(train_data))
+print(len(val_data))
+print(len(test_data))
+
+
+model = my_model(784,10).to(device)
+
+
 loss_fn = nn.CrossEntropyLoss()
-opt_class = torch.optim.Adam(model.parameters(), lr = 0.001)
+opt = torch.optim.Adam(model.parameters(), lr = 0.001)
+EPOHS = 5
+
+run_train_loss = []
+mean_train_loss =[]
+run_val_loss = []
+mean_val_loss = []
+
+
+
+
+for i in range(EPOHS):
+
+    model.train()
+    train_loop = tqdm(train_data,leave = False)
+    for x, target in train_loop:
+        x = x.reshape(-1,28*28).to(device)
+
+
+        target = target.reshape(-1).to(torch.int64)
+
+
+        pred = model(x)
+        loss = loss_fn(pred,target)
+
+        opt.zero_grad()
+        loss.backward()
+
+        opt.step()
+
+        run_train_loss.append(loss.item())
+        mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
+
+
+        train_loop.set_description(f"Epohs{i + 1} train loss {mean_train_loss:.4f}")
+
+    model.eval()
+    val_loop = tqdm(val_data,leave = False)
+    with torch.no_grad():
+        for x, target in val_loop:
+            x = x.reshape(-1,28*28).to(device)
+
+            target = target.reshape(-1).to(torch.int32)
+            target = torch.eye(10)[target].to(device)
+
+            pred = model(x)
+            loss = loss_fn(pred,target)
+
+            run_val_loss.append(loss.item())
+            mean_val_loss = sum(run_val_loss)/len(run_val_loss)
+            val_loop.set_description(f" epohs {i +1} mean val loss {mean_val_loss:.4f}")
+
+
 
 input = torch.rand([16,784],dtype=torch.float32)
 output = model(input)

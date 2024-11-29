@@ -15,38 +15,42 @@ import json
 import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
+print(device)
 class MnistDataset(Dataset):
     def __init__(self, path, transform=None):
         self.path = path
         self.transform = transform
-        self.len_dataset = 0
         self.data_list = []
+        self.targets = []
+
 
         for path_dir, dir_list, file_list in os.walk(path):
             if path_dir == path:
                 self.classes = dir_list
-                self.class_to_idx = {
-                    cls_name: i for i, cls_name in enumerate(self.classes)
-
-                }
+                self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
                 continue
-            cls = path_dir.split('\\')[-1]
 
+            cls = path_dir.split(os.sep)[-1]
             for name_file in file_list:
                 file_path = os.path.join(path_dir, name_file)
-                self.data_list.append((file_path, self.class_to_idx[cls]))
-            self.len_dataset += len(file_list)
+                sample = np.array(Image.open(file_path).resize((28, 28)), dtype=np.float32)
+                self.data_list.append(sample)
+                self.targets.append(self.class_to_idx[cls])
+
+
+        self.data_list = torch.tensor(self.data_list, dtype=torch.float32)
+        self.targets = torch.tensor(self.targets, dtype=torch.long)
+
     def __len__(self):
-        return self.len_dataset
+        return len(self.data_list)
 
     def __getitem__(self, index):
-        file_path, target = self.data_list[index]
-        sample = np.array(Image.open(file_path).resize((28, 28)))
-        sample = torch.tensor(sample, dtype=torch.float32)
+        sample = self.data_list[index]
 
         if self.transform is not None:
             sample = self.transform(sample)
+
+        target = self.targets[index]
         return sample, target
 
 
@@ -60,20 +64,18 @@ def get_data():
 
     train_data, val_data = random_split(train_dataset, [0.8, 0.2])
 
-    train_loader = DataLoader(train_data, batch_size=16,shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=16, shuffle=False)
-    test_Loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    train_loader = DataLoader(train_data, batch_size=64,shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
+    test_Loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     return train_loader, val_loader, test_Loader
-
-
-
 class my_model(nn.Module):
     def __init__(self,input,output):
         super().__init__()
         self.layer1 = nn.Linear(input,128)
         self.layer2 = nn.Linear(128,output)
         self.act = nn.ReLU()
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self,x):
         x = self.layer1(x)
@@ -91,62 +93,99 @@ print(len(test_data))
 
 model = my_model(784,10).to(device)
 
-
+LearningRate = 0.0001
+EPOHS = 15
 loss_fn = nn.CrossEntropyLoss()
-opt = torch.optim.Adam(model.parameters(), lr = 0.001)
-EPOHS = 5
+opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
+
+
 
 run_train_loss = []
-mean_train_loss =[]
 run_val_loss = []
-mean_val_loss = []
-
-
-
+accuracy_train =[]
+accuracy_val =[]
 
 for i in range(EPOHS):
 
     model.train()
+
     train_loop = tqdm(train_data,leave = False)
+    correct = 0
+    total = 0
     for x, target in train_loop:
+
         x = x.reshape(-1,28*28).to(device)
-
-
-        target = target.reshape(-1).to(torch.int64)
+        target = target.reshape(-1)
+        target = torch.eye(10)[target].to(device).to(torch.float32)
 
 
         pred = model(x)
-        loss = loss_fn(pred,target)
 
+
+
+
+        correct += (pred.argmax(dim =1) == target.argmax(dim = 1)).sum().item()
+        total += target.size(0)
+
+
+        loss = loss_fn(pred,target)
         opt.zero_grad()
         loss.backward()
-
         opt.step()
-
         run_train_loss.append(loss.item())
         mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
 
+        accuracy_train.append(correct/total)
+        train_loop.set_description(f"Epohs{i + 1} train loss {mean_train_loss:.4f} accuracy {correct /total:.2f}")
+    print(f"Epohs{i + 1} train mean loss {mean_train_loss:.4f} accuracy {correct / total:.2f}")
 
-        train_loop.set_description(f"Epohs{i + 1} train loss {mean_train_loss:.4f}")
 
     model.eval()
+
     val_loop = tqdm(val_data,leave = False)
+    correct =0
+    total =0
     with torch.no_grad():
         for x, target in val_loop:
             x = x.reshape(-1,28*28).to(device)
 
-            target = target.reshape(-1).to(torch.int32)
-            target = torch.eye(10)[target].to(device)
+            target = target.reshape(-1).to(torch.int64).to(device)
 
             pred = model(x)
+
+            predict = torch.argmax(pred,dim=1)
+            correct+= (predict == target).sum().item()
+            total += target.size(0)
+
             loss = loss_fn(pred,target)
+
+
 
             run_val_loss.append(loss.item())
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
-            val_loop.set_description(f" epohs {i +1} mean val loss {mean_val_loss:.4f}")
+            val_loop.set_description(f" epohs {i +1} mean val loss {mean_val_loss:.4f} accuracy {correct /total:.2f}")
+
+        print(f'Epohs{i+1} val mean loss {mean_val_loss:.4f} accuracy {correct / total:.2f}')
 
 
 
-input = torch.rand([16,784],dtype=torch.float32)
-output = model(input)
-print(output.shape)
+plt.figure(figsize=(8, 5))
+plt.plot(run_train_loss, label="Train Loss", color="blue")
+plt.plot(run_val_loss, label="Validation Loss", color="orange")
+plt.title(f"Training and Validation Loss learning {LearningRate}")  # Заголовок графика
+plt.xlabel("Iterations")  # Подпись оси X
+plt.ylabel("Loss")  # Подпись оси Y
+plt.legend()  # Легенда
+plt.grid()  # Включаем сетку для удобства
+plt.show()
+
+# График для accuracy
+plt.figure(figsize=(8, 5))
+plt.plot(accuracy_train, label="Train Accuracy", color="blue")
+plt.plot(accuracy_val, label="Validation Accuracy", color="orange")
+plt.title(f"Training and Validation Accuracy Learning {LearningRate}")  # Заголовок графика
+plt.xlabel("Epochs")  # Подпись оси X
+plt.ylabel("Accuracy")  # Подпись оси Y
+plt.legend()  # Легенда
+plt.grid()  # Включаем сетку для удобства
+plt.show()

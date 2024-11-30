@@ -26,11 +26,16 @@ class MnistDataset(Dataset):
         self.data_list = []
         self.targets = []
 
-
+        last_part = os.path.basename(path)
+        TOTAL = 10000 if last_part == 'testing' else 60000
+        print(TOTAL)
+        path_loop = tqdm(total = TOTAL)
         for path_dir, dir_list, file_list in os.walk(path):
+
             if path_dir == path:
                 self.classes = dir_list
                 self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
+                path_loop.update()
                 continue
 
             cls = path_dir.split(os.sep)[-1]
@@ -39,6 +44,7 @@ class MnistDataset(Dataset):
                 sample = np.array(Image.open(file_path).resize((28, 28)), dtype=np.float32)
                 self.data_list.append(sample)
                 self.targets.append(self.class_to_idx[cls])
+                path_loop.update()
 
 
         self.data_list = torch.tensor(np.array(self.data_list), dtype=torch.float32)
@@ -64,9 +70,9 @@ def get_data():
 
     train_data, val_data = random_split(train_dataset, [0.8, 0.2])
 
-    train_loader = DataLoader(train_data, batch_size=64,shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
-    test_Loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_data, batch_size=1,shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
+    test_Loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     return train_loader, val_loader, test_Loader
 class my_model(nn.Module):
@@ -109,10 +115,10 @@ for i in range(EPOHS):
 
     model.train()
 
-
+    train_loop = tqdm(train_data, leave = False)
     correct = 0
     total = 0
-    for x, target in train_data:
+    for x, target in train_loop:
 
         x = x.reshape(-1,28*28).to(device)
         target = target.reshape(-1)
@@ -136,7 +142,7 @@ for i in range(EPOHS):
         mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
 
         accuracy_train.append(correct/total)
-
+        train_loop.set_description(f"Eposh {i+1} loss: {mean_train_loss:.4f}, accuracy: {correct/total:.4f}")
 
 
     model.eval()
@@ -144,8 +150,9 @@ for i in range(EPOHS):
 
     correct =0
     total =0
+    val_loop = tqdm(val_data,leave =False)
     with torch.no_grad():
-        for x, target in val_data:
+        for x, target in val_loop:
             x = x.reshape(-1,28*28).to(device)
 
             target = target.reshape(-1).to(torch.int64).to(device)
@@ -162,6 +169,8 @@ for i in range(EPOHS):
 
             run_val_loss.append(loss.item())
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
+            val_loop.set_description(f"val loss: {mean_val_loss:.4f}, accuracy:{correct/total:.4f}")
+    print(f"Epos {i+1} Loss: {mean_val_loss:.4f}, accuracy: {correct/total:4f}")
 
 
 end_time = time.time()

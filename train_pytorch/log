@@ -1,0 +1,37 @@
+Train_loss: 0.3161, Train accuracy: 0.8902
+val_loss: 0.2235, Val accuracy: 0.9308
+learning rate: 0.001000,
+Epochs: 1 |     time 2024-11-30 21:28:47 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT: -10
+Train_loss: 0.8919, Train accuracy: 0.6190
+val_loss: 0.7225, Val accuracy: 0.7514
+learning rate: 0.010000,
+batch_size: 64
+Epochs: 1 |     time 2024-11-30 21:33:35 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT: -10
+Train_loss: 1.4198, Train accuracy: 0.6952
+val_loss: 1.3484, Val accuracy: 0.5025
+learning rate: 0.010000,
+batch_size: 64
+Elapsed time 4.275311231613159
+Epochs: 2 |     time 2024-11-30 21:37:14 
+-----------------------------------------------------------------------------------------------
+
+MEAN COUNT -10
+Train_loss: 1.7856, Train accuracy: 0.3581
+val_loss: 1.7716, Val accuracy: 0.3256
+learning rate: 0.010000,
+batch_size: 64
+Elapsed time 19.686471700668335
+Epochs: 10 |     time 2024-11-30 21:39:13 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 1.7304, Train accuracy: 0.3301
+val_loss: 3.4680, Val accuracy: 0.3331
+learning rate: 0.010000,
+batch_size: 64
+Elapsed time 38.31954836845398
+Epochs: 20 |     time 2024-11-30 21:43:18 
+-----------------------------------------------------------------------------------------------

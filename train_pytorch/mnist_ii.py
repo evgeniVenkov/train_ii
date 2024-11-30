@@ -15,6 +15,8 @@ import json
 import numpy as np
 import time
 
+from datetime import datetime
+
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -58,23 +60,6 @@ class MnistDataset(Dataset):
 
         target = self.targets[index]
         return sample, target
-
-
-def get_data():
-    path_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\testing')
-    path_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\training')
-
-
-    train_dataset = MnistDataset(path_train)
-    test_dataset = MnistDataset(path_test)
-
-    train_data, val_data = random_split(train_dataset, [0.8, 0.2])
-
-    train_loader = DataLoader(train_data, batch_size=1,shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
-    test_Loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    return train_loader, val_loader, test_Loader
 class my_model(nn.Module):
     def __init__(self,input,output):
         super().__init__()
@@ -89,20 +74,52 @@ class my_model(nn.Module):
         out = self.layer2(x)
 
         return out
+def get_data(Batch_size = 1):
+    path_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\testing')
+    path_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\training')
 
-train_data,val_data,test_data = get_data()
+
+    train_dataset = MnistDataset(path_train)
+    test_dataset = MnistDataset(path_test)
+
+    train_data, val_data = random_split(train_dataset, [0.8, 0.2])
+
+    train_loader = DataLoader(train_data, batch_size=Batch_size,shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=Batch_size, shuffle=False)
+    test_Loader = DataLoader(test_dataset, batch_size=Batch_size, shuffle=False)
+
+    return train_loader, val_loader, test_Loader
+def log_():
+    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+    log = (f"\nMEAN COUNT {mean_count}\n"
+           f"Train_loss: {np.mean(run_train_loss[mean_count:]):.4f}, "
+           f"Train accuracy: {np.mean(accuracy_train[mean_count:]):.4f}\n"
+           f"val_loss: {np.mean(run_val_loss[mean_count:]):.4f}, Val accuracy: {np.mean(accuracy_val[mean_count:]):.4f}\n"
+           f"learning rate: {opt.param_groups[0]['lr']:.6f},\n"
+           f"batch_size: {Batch_size}\n"
+           f"Elapsed time {end_time - start_time}\n"
+           f"Epochs: {EPOHS} |     "
+           f"time {time} \n"
+           f"-----------------------------------------------------------------------------------------------")
+
+    with open("log", "a") as f:
+        f.write(log)
+
+Batch_size = 64
+LearningRate = 0.0001
+EPOHS = 20
+
+loss_fn = nn.CrossEntropyLoss()
+model = my_model(784,10).to(device)
+opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
+
+train_data,val_data,test_data = get_data(Batch_size)
 
 print(len(train_data))
 print(len(val_data))
 print(len(test_data))
-
-start_time = time.time()
-model = my_model(784,10).to(device)
-
-LearningRate = 0.0001
-EPOHS = 1
-loss_fn = nn.CrossEntropyLoss()
-opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
 
 
 
@@ -110,6 +127,8 @@ run_train_loss = []
 run_val_loss = []
 accuracy_train =[]
 accuracy_val =[]
+
+start_time = time.time()
 
 for i in range(EPOHS):
 
@@ -142,7 +161,9 @@ for i in range(EPOHS):
         mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
 
         accuracy_train.append(correct/total)
-        train_loop.set_description(f"Eposh {i+1} loss: {mean_train_loss:.4f}, accuracy: {correct/total:.4f}")
+        train_loop.set_description(f"Eposh {i+1} loss: {mean_train_loss:.4f}, "
+                                   f"accuracy: {correct/total:.4f}, "
+                                   f"learningrate{LearningRate:.8f}")
 
 
     model.eval()
@@ -162,6 +183,7 @@ for i in range(EPOHS):
             predict = torch.argmax(pred,dim=1)
             correct+= (predict == target).sum().item()
             total += target.size(0)
+            accuracy_val.append(correct/total)
 
             loss = loss_fn(pred,target)
 
@@ -169,16 +191,24 @@ for i in range(EPOHS):
 
             run_val_loss.append(loss.item())
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
-            val_loop.set_description(f"val loss: {mean_val_loss:.4f}, accuracy:{correct/total:.4f}")
-    print(f"Epos {i+1} Loss: {mean_val_loss:.4f}, accuracy: {correct/total:4f}")
+            val_loop.set_description(f"val loss: {mean_val_loss:.4f},"
+                                     f"accuracy:{correct/total:.4f},"
+                                     f"learningrate{LearningRate:.8f}")
+    log = (f"Epos {i+1} Loss: {mean_val_loss:.4f}, accuracy: {correct/total:4f} learningRate : {LearningRate}")
+
+    print(log)
+
 
 
 end_time = time.time()
+mean_count = -10
+
+log_()
 
 print(f"Elapsed time {end_time - start_time}")
 
 plt.figure(figsize=(8, 5))
-plt.plot(run_train_loss, label="Train Loss", color="blue")
+plt.plot(run_train_loss[100:], label="Train Loss", color="blue")
 plt.plot(run_val_loss, label="Validation Loss", color="orange")
 plt.title(f"Training and Validation Loss learning {LearningRate}")  # Заголовок графика
 plt.xlabel("Iterations")  # Подпись оси X
@@ -197,3 +227,5 @@ plt.ylabel("Accuracy")  # Подпись оси Y
 plt.legend()  # Легенда
 plt.grid()  # Включаем сетку для удобства
 plt.show()
+
+

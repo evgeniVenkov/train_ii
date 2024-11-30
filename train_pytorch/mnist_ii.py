@@ -13,6 +13,9 @@ from PIL import Image
 import os
 import json
 import numpy as np
+import time
+
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
@@ -38,7 +41,7 @@ class MnistDataset(Dataset):
                 self.targets.append(self.class_to_idx[cls])
 
 
-        self.data_list = torch.tensor(self.data_list, dtype=torch.float32)
+        self.data_list = torch.tensor(np.array(self.data_list), dtype=torch.float32)
         self.targets = torch.tensor(self.targets, dtype=torch.long)
 
     def __len__(self):
@@ -46,9 +49,6 @@ class MnistDataset(Dataset):
 
     def __getitem__(self, index):
         sample = self.data_list[index]
-
-        if self.transform is not None:
-            sample = self.transform(sample)
 
         target = self.targets[index]
         return sample, target
@@ -90,11 +90,11 @@ print(len(train_data))
 print(len(val_data))
 print(len(test_data))
 
-
+start_time = time.time()
 model = my_model(784,10).to(device)
 
 LearningRate = 0.0001
-EPOHS = 15
+EPOHS = 1
 loss_fn = nn.CrossEntropyLoss()
 opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
 
@@ -109,10 +109,10 @@ for i in range(EPOHS):
 
     model.train()
 
-    train_loop = tqdm(train_data,leave = False)
+
     correct = 0
     total = 0
-    for x, target in train_loop:
+    for x, target in train_data:
 
         x = x.reshape(-1,28*28).to(device)
         target = target.reshape(-1)
@@ -136,17 +136,16 @@ for i in range(EPOHS):
         mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
 
         accuracy_train.append(correct/total)
-        train_loop.set_description(f"Epohs{i + 1} train loss {mean_train_loss:.4f} accuracy {correct /total:.2f}")
-    print(f"Epohs{i + 1} train mean loss {mean_train_loss:.4f} accuracy {correct / total:.2f}")
+
 
 
     model.eval()
 
-    val_loop = tqdm(val_data,leave = False)
+
     correct =0
     total =0
     with torch.no_grad():
-        for x, target in val_loop:
+        for x, target in val_data:
             x = x.reshape(-1,28*28).to(device)
 
             target = target.reshape(-1).to(torch.int64).to(device)
@@ -163,11 +162,11 @@ for i in range(EPOHS):
 
             run_val_loss.append(loss.item())
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
-            val_loop.set_description(f" epohs {i +1} mean val loss {mean_val_loss:.4f} accuracy {correct /total:.2f}")
-
-        print(f'Epohs{i+1} val mean loss {mean_val_loss:.4f} accuracy {correct / total:.2f}')
 
 
+end_time = time.time()
+
+print(f"Elapsed time {end_time - start_time}")
 
 plt.figure(figsize=(8, 5))
 plt.plot(run_train_loss, label="Train Loss", color="blue")

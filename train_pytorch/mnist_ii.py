@@ -22,22 +22,37 @@ from datetime import datetime
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 class MnistDataset(Dataset):
-    def __init__(self, path, transform=None):
+    def __init__(self, path, transform=None, cache_file="mnist_dataset_train.pt"):
         self.path = path
         self.transform = transform
+        self.cache_file = cache_file
+
+        if os.path.exists(self.cache_file):
+
+            print(f"Загрузка обработанных данных из файла {self.cache_file}")
+            data = torch.load(self.cache_file)
+            self.data_list = data['data_list']
+            self.targets = data['targets']
+            self.classes = data['classes']
+            self.class_to_idx = data['class_to_idx']
+        else:
+
+            print("Обработка данных...")
+            self._process_and_cache_data()
+
+    def _process_and_cache_data(self):
         self.data_list = []
         self.targets = []
 
-        last_part = os.path.basename(path)
+        last_part = os.path.basename(self.path)
         TOTAL = 10000 if last_part == 'testing' else 60000
 
-        path_loop = tqdm(total = TOTAL)
-        for path_dir, dir_list, file_list in os.walk(path):
 
-            if path_dir == path:
+        path_loop = tqdm(total=TOTAL, desc="Обработка изображений")
+        for path_dir, dir_list, file_list in os.walk(self.path):
+            if path_dir == self.path:
                 self.classes = dir_list
                 self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
-                path_loop.update()
                 continue
 
             cls = path_dir.split(os.sep)[-1]
@@ -48,17 +63,32 @@ class MnistDataset(Dataset):
                 self.targets.append(self.class_to_idx[cls])
                 path_loop.update()
 
+        path_loop.close()
+
 
         self.data_list = torch.tensor(np.array(self.data_list), dtype=torch.float32)
         self.targets = torch.tensor(self.targets, dtype=torch.long)
 
+
+        data = {
+            'data_list': self.data_list,
+            'targets': self.targets,
+            'classes': self.classes,
+            'class_to_idx': self.class_to_idx
+        }
+        torch.save(data, self.cache_file)
+        print(f"Обработанные данные сохранены в файл: {self.cache_file}")
+
     def __len__(self):
         return len(self.data_list)
 
-    def __getitem__(self, index):
-        sample = self.data_list[index]
+    def __getitem__(self, idx):
+        sample = self.data_list[idx]
+        target = self.targets[idx]
 
-        target = self.targets[index]
+        if self.transform:
+            sample = self.transform(sample)
+
         return sample, target
 class my_model(nn.Module):
     def __init__(self,input,output):
@@ -80,7 +110,7 @@ def get_data(Batch_size = 1):
 
 
     train_dataset = MnistDataset(path_train)
-    test_dataset = MnistDataset(path_test)
+    test_dataset = MnistDataset(path_test,None,"mnist_dataset_test.pt")
 
     train_data, val_data = random_split(train_dataset, [0.8, 0.2])
 

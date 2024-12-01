@@ -30,7 +30,7 @@ class MnistDataset(Dataset):
 
         last_part = os.path.basename(path)
         TOTAL = 10000 if last_part == 'testing' else 60000
-        print(TOTAL)
+
         path_loop = tqdm(total = TOTAL)
         for path_dir, dir_list, file_list in os.walk(path):
 
@@ -97,7 +97,7 @@ def log_():
            f"Train_loss: {np.mean(run_train_loss[mean_count:]):.4f}, "
            f"Train accuracy: {np.mean(accuracy_train[mean_count:]):.4f}\n"
            f"val_loss: {np.mean(run_val_loss[mean_count:]):.4f}, Val accuracy: {np.mean(accuracy_val[mean_count:]):.4f}\n"
-           f"learning rate: {opt.param_groups[0]['lr']:.6f},\n"
+           f"learning rate start: {LearningRate}:  |  end: {opt.param_groups[0]['lr']:.6f},\n"
            f"batch_size: {Batch_size}\n"
            f"Elapsed time {end_time - start_time}\n"
            f"Epochs: {EPOHS} |     "
@@ -107,19 +107,17 @@ def log_():
     with open("log", "a") as f:
         f.write(log)
 
-Batch_size = 64
-LearningRate = 0.0001
-EPOHS = 20
+Batch_size = 128
+LearningRate = 0.001
+EPOHS = 10
 
 loss_fn = nn.CrossEntropyLoss()
 model = my_model(784,10).to(device)
 opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
 
-train_data,val_data,test_data = get_data(Batch_size)
+lr_scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size = 300, gamma = 0.9)
 
-print(len(train_data))
-print(len(val_data))
-print(len(test_data))
+train_data,val_data,test_data = get_data(Batch_size)
 
 
 
@@ -134,7 +132,7 @@ for i in range(EPOHS):
 
     model.train()
 
-    train_loop = tqdm(train_data, leave = False)
+    train_loop = tqdm(train_data, leave = True)
     correct = 0
     total = 0
     for x, target in train_loop:
@@ -156,14 +154,19 @@ for i in range(EPOHS):
         loss = loss_fn(pred,target)
         opt.zero_grad()
         loss.backward()
+
+
         opt.step()
+        lr_scheduler.step()
+
+
         run_train_loss.append(loss.item())
         mean_train_loss = sum(run_train_loss)/ len(run_train_loss)
 
         accuracy_train.append(correct/total)
         train_loop.set_description(f"Eposh {i+1} loss: {mean_train_loss:.4f}, "
                                    f"accuracy: {correct/total:.4f}, "
-                                   f"learningrate{LearningRate:.8f}")
+                                   f"learningrate{opt.param_groups[0]['lr']}")
 
 
     model.eval()
@@ -193,15 +196,11 @@ for i in range(EPOHS):
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
             val_loop.set_description(f"val loss: {mean_val_loss:.4f},"
                                      f"accuracy:{correct/total:.4f},"
-                                     f"learningrate{LearningRate:.8f}")
-    log = (f"Epos {i+1} Loss: {mean_val_loss:.4f}, accuracy: {correct/total:4f} learningRate : {LearningRate}")
-
-    print(log)
-
+                                     f"learningrate{opt.param_groups[0]['lr']}")
 
 
 end_time = time.time()
-mean_count = -10
+mean_count = -100
 
 log_()
 

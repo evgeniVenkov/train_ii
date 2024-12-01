@@ -35,3 +35,155 @@ batch_size: 64
 Elapsed time 38.31954836845398
 Epochs: 20 |     time 2024-11-30 21:43:18 
 -----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0401, Train accuracy: 0.9832
+val_loss: 0.1251, Val accuracy: 0.9625
+learning rate: 0.000349,
+batch_size: 32
+Elapsed time 34.366506814956665
+Epochs: 10 |     time 2024-12-01 12:55:54 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.1088, Train accuracy: 0.9738
+val_loss: 0.1362, Val accuracy: 0.9539
+learning rate start: 0.001:  |  end: 0.000599,
+batch_size: 32
+Elapsed time 38.2796905040741
+Epochs: 10 |     time 2024-12-01 12:59:17 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.1037, Train accuracy: 0.9794
+val_loss: 0.4108, Val accuracy: 0.9607
+learning rate start: 0.001:  |  end: 0.000434,
+batch_size: 32
+Elapsed time 41.16690278053284
+Epochs: 10 |     time 2024-12-01 13:01:10 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.1721, Train accuracy: 0.9865
+val_loss: 0.1323, Val accuracy: 0.9650
+learning rate start: 0.001:  |  end: 0.000122,
+batch_size: 16
+Elapsed time 78.55684852600098
+Epochs: 10 |     time 2024-12-01 13:04:40 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0604, Train accuracy: 0.9794
+val_loss: 0.1747, Val accuracy: 0.9656
+learning rate start: 0.001:  |  end: 0.000810,
+batch_size: 128
+Elapsed time 14.1527841091156
+Epochs: 10 |     time 2024-12-01 13:06:29 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0437, Train accuracy: 0.9892
+val_loss: 0.1760, Val accuracy: 0.9619
+learning rate start: 0.001:  |  end: 0.000478,
+batch_size: 128
+Elapsed time 14.40573787689209
+Epochs: 10 |     time 2024-12-01 13:09:03 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0548, Train accuracy: 0.9842
+val_loss: 0.3658, Val accuracy: 0.9461
+learning rate start: 0.0001:  |  end: 0.000048,
+batch_size: 128
+Elapsed time 13.446427822113037
+Epochs: 10 |     time 2024-12-01 13:11:19 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.2347, Train accuracy: 0.9462
+val_loss: 0.2519, Val accuracy: 0.9362
+learning rate start: 0.005:  |  end: 0.002391,
+batch_size: 128
+Elapsed time 14.15321946144104
+Epochs: 10 |     time 2024-12-01 13:12:34 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0336, Train accuracy: 0.9879
+val_loss: 0.1290, Val accuracy: 0.9634
+learning rate start: 0.001:  |  end: 0.000478,
+batch_size: 128
+Elapsed time 14.306414127349854
+Epochs: 10 |     time 2024-12-01 13:13:52 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0018, Train accuracy: 0.9996
+val_loss: 0.1839, Val accuracy: 0.9699
+learning rate start: 0.001:  |  end: 0.000206,
+batch_size: 128
+Elapsed time 27.301383018493652
+Epochs: 20 |     time 2024-12-01 13:15:07 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -10
+Train_loss: 0.0145, Train accuracy: 0.9960
+val_loss: 0.1529, Val accuracy: 0.9683
+learning rate start: 0.001:  |  end: 0.000314,
+batch_size: 128
+Elapsed time 21.048028469085693
+Epochs: 15 |     time 2024-12-01 13:16:50 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0094, Train accuracy: 0.9975
+val_loss: 0.1812, Val accuracy: 0.9664
+learning rate start: 0.001:  |  end: 0.000314,
+batch_size: 128
+Elapsed time 20.58951997756958
+Epochs: 15 |     time 2024-12-01 13:19:58 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0344, Train accuracy: 0.9881
+val_loss: 0.1577, Val accuracy: 0.9678
+learning rate start: 0.001:  |  end: 0.000478,
+batch_size: 128
+Elapsed time 12.930673837661743
+Epochs: 10 |     time 2024-12-01 13:21:12 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0529, Train accuracy: 0.9851
+val_loss: 0.1959, Val accuracy: 0.9586
+learning rate start: 0.001:  |  end: 0.000590,
+batch_size: 128
+Elapsed time 13.72293496131897
+Epochs: 10 |     time 2024-12-01 13:22:05 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0197, Train accuracy: 0.9939
+val_loss: 0.1407, Val accuracy: 0.9693
+learning rate start: 0.001:  |  end: 0.000282,
+batch_size: 128
+Elapsed time 14.239098310470581
+Epochs: 10 |     time 2024-12-01 13:22:56 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0175, Train accuracy: 0.9958
+val_loss: 0.1457, Val accuracy: 0.9653
+learning rate start: 0.001:  |  end: 0.000150,
+batch_size: 128
+Elapsed time 14.283821821212769
+Epochs: 10 |     time 2024-12-01 13:23:56 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0173, Train accuracy: 0.9938
+val_loss: 0.1682, Val accuracy: 0.9628
+learning rate start: 0.001:  |  end: 0.000206,
+batch_size: 128
+Elapsed time 14.160012245178223
+Epochs: 10 |     time 2024-12-01 13:24:50 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0204, Train accuracy: 0.9935
+val_loss: 0.1871, Val accuracy: 0.9635
+learning rate start: 0.001:  |  end: 0.000349,
+batch_size: 128
+Elapsed time 13.94281792640686
+Epochs: 10 |     time 2024-12-01 13:26:28 
+-----------------------------------------------------------------------------------------------
+MEAN COUNT -100
+Train_loss: 0.0257, Train accuracy: 0.9941
+val_loss: 0.1807, Val accuracy: 0.9648
+learning rate start: 0.001:  |  end: 0.000282,
+batch_size: 128
+Elapsed time 13.401708602905273
+Epochs: 10 |     time 2024-12-01 13:29:07 
+-----------------------------------------------------------------------------------------------

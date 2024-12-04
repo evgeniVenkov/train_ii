@@ -1,5 +1,5 @@
 import torch
-import torchvision
+
 from torchvision.transforms import v2
 import torch.nn as nn
 
@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import json
+from tqdm import tqdm
+
 
 class squareDataset(Dataset):
     def __init__(self, path, transform=None):
@@ -33,14 +35,15 @@ class squareDataset(Dataset):
         name = self.list_names[index]
         path = os.path.join(self.path, name)
 
-        img = Image.open(path)
+        img = np.array(Image.open(path))
+
+
         coords = torch.tensor(self.dir_cords[name])
 
         if self.transform is not None:
             img = self.transform(img)
 
         return img, coords
-
 class my_model(nn.Module):
     def __init__(self,input,output):
         super().__init__()
@@ -53,47 +56,142 @@ class my_model(nn.Module):
         x = self.act(x)
         out = self.layer2(x)
         return out
+def get_data(path, batch_size = 32):
+    teansform = v2.Compose([v2.ToImage(),
+                            v2.ToDtype(torch.float32,scale = True),
+                            v2.Normalize(mean = (0.5,), std = (0.5,))
+                            ])
+
+    data = squareDataset(path, teansform)
+
+    train_size = int(0.72* len(data))
+    val_size = int(0.18 * len(data))
+    test_size = len(data) - train_size- val_size
+
+    train_data, val_data, test_data = random_split(data, [train_size, val_size, test_size])
 
 
-model = my_model(64*64,2)
-loss_fn = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(),lr=0.001)
+    train_loader = DataLoader(train_data,batch_size=batch_size,shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batch_size,shuffle=False)
+    test_loader = DataLoader(test_data,batch_size=batch_size, shuffle=False)
 
-input = torch.rand([16,64*64])
-output = model(input)
-print(output.shape)
+    return train_loader, val_loader, test_loader
+
+def plot(LearningRate,run_train_loss,run_val_loss,accuracy_train,accuracy_val):
+    plt.figure(figsize=(8, 5))
+    plt.plot(run_train_loss[100:], label="Train Loss", color="blue")
+    plt.plot(run_val_loss, label="Validation Loss", color="orange")
+    plt.title(f"Training and Validation Loss learning {LearningRate}")  # Заголовок графика
+    plt.xlabel("Iterations")  # Подпись оси X
+    plt.ylabel("Loss")  # Подпись оси Y
+    plt.legend()  # Легенда
+    plt.grid()  # Включаем сетку для удобства
+    plt.show()
+
+    # График для accuracy
+    plt.figure(figsize=(8, 5))
+    plt.plot(accuracy_train, label="Train Accuracy", color="blue")
+    plt.plot(accuracy_val, label="Validation Accuracy", color="orange")
+    plt.title(f"Training and Validation Accuracy Learning {LearningRate}")  # Заголовок графика
+    plt.xlabel("Epochs")  # Подпись оси X
+    plt.ylabel("Accuracy")  # Подпись оси Y
+    plt.legend()  # Легенда
+    plt.grid()  # Включаем сетку для удобства
+    plt.show()
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+path = os.path.join(os.path.dirname(__file__),"dataset")
 
 
-# path = os.path.join(os.path.dirname(__file__),"dataset")
-#
-# transform = v2.Compose([
-#     v2.ToImage(),
-#     v2.ToDtype(torch.float32, scale=True),
-#     v2.Normalize(mean = (0.5,), std = (0.5,))
-#
-# ])
-#
-#
-# sq_data =  squareDataset(path, transform)
-#
-# img, coord = sq_data[548]
-# print(f"type: {type(img)}")
-# print(f"shape: {img.shape}")
-# print(f"Dt: {img.dtype}")
-# print(f" min: {img.min()} max: {img.max()}")
-# print("cls")
-# print(f"coords: {type(coord)}")
 
-# print(len(sq_data))
-# img, cord = sq_data[130]
-# print(cord)
-# plt.scatter(cord[0],cord[1],marker='d',color='red')
-# plt.imshow(img,cmap='gray')
-# plt.show()
 
-# train_set,val_set, test_set = random_split(sq_data,[0.7,0.1,0.2])
-#
-# train_loader = DataLoader(train_set,batch_size = 16, shuffle=True)
-# val_loader = DataLoader(val_set, batch_size = 16, shuffle = False)
-# test_loader = DataLoader(test_set, batch_size = 16, shuffle = False)
+learning_rate = 0.001
+EPOHS = 1
+batch_size = 128
+
+train_data, val_data,test_data = get_data(path, batch_size)
+model = my_model(64*64,2).to(device)
+loss_fn = nn.MSELoss().to(device)
+optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+
+val_loss = []
+train_loss = []
+train_acc = []
+val_acc = []
+
+
+
+
+for i in range(EPOHS):
+    model.train()
+    train_loop = tqdm(train_data, leave=False, desc=f"Epohs: {i+1}")
+    epohs_loss = []
+    correct = 0
+    total = 0
+
+    for x, target in train_loop:
+
+        x = x.reshape(-1, 64 * 64).float().to(device)
+        target = target.float().to(device)
+
+        pred = model(x)
+
+        loss = loss_fn(pred, target)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        train_loss.append(loss.item())
+        epohs_loss.append(loss.item())
+
+        mean_loss = np.mean(epohs_loss)
+
+        threshold = 3.0
+
+        correct += torch.sum(torch.abs(pred - target) < threshold).item()
+        total += target.size(0)
+
+
+        train_acc.append(correct / total)
+
+        train_loop.set_description(f"train Epoch {i+1}"
+                                   f" loss: {mean_loss:.4f}"
+                                   f" accuracy: {(correct/(total*2)):.4f}")
+
+
+model.eval()
+val_loop = tqdm(val_data, leave=True)
+epohs_loss = []
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for x, target in val_loop:
+        x = x.reshape(-1, 64 * 64).float().to(device)
+        target = target.float().to(device)
+
+        pred = model(x)
+        loss = loss_fn(pred, target)
+
+        epohs_loss.append(loss.item())
+        val_loss.append(loss.item())
+        mean_loss = np.mean(epohs_loss)
+
+        total += target.shape[0]
+
+        threshold = 3.0
+
+        correct += (torch.abs(pred - target) < threshold).sum().item()
+
+
+        val_acc.append(correct / total)
+
+        val_loop.set_description(f"val Epoch {i+1} "
+                                 f"loss: {mean_loss:.1f} "
+                                 f"accuracy: {correct/total:.1f} ")
+
+
+
+plot(learning_rate,train_loss,val_loss,train_acc,val_acc)
 

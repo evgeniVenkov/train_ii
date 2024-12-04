@@ -139,15 +139,16 @@ def log_():
 
 Batch_size = 128
 LearningRate = 0.001
-EPOHS = 10
+EPOHS = 1
 
 loss_fn = nn.CrossEntropyLoss()
 model = my_model(784,10).to(device)
 opt = torch.optim.Adam(model.parameters(), lr = LearningRate)
 
-lr_scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size = 300, gamma = 0.9)
+lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.01, patience=50, mode="min")
 
 train_data,val_data,test_data = get_data(Batch_size)
+
 
 
 
@@ -167,15 +168,14 @@ for i in range(EPOHS):
     total = 0
     for x, target in train_loop:
 
+
+
         x = x.reshape(-1,28*28).to(device)
         target = target.reshape(-1)
         target = torch.eye(10)[target].to(device).to(torch.float32)
 
 
         pred = model(x)
-
-
-
 
         correct += (pred.argmax(dim =1) == target.argmax(dim = 1)).sum().item()
         total += target.size(0)
@@ -187,7 +187,8 @@ for i in range(EPOHS):
 
 
         opt.step()
-        lr_scheduler.step()
+        if i > 3:
+            lr_scheduler.step(loss.item())
 
 
         run_train_loss.append(loss.item())
@@ -256,5 +257,4 @@ plt.ylabel("Accuracy")  # Подпись оси Y
 plt.legend()  # Легенда
 plt.grid()  # Включаем сетку для удобства
 plt.show()
-
 

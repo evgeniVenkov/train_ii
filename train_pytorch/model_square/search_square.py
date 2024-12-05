@@ -100,14 +100,14 @@ def plot(LearningRate,run_train_loss,run_val_loss,accuracy_train,accuracy_val):
     plt.show()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-path = os.path.join(os.path.dirname(__file__),"dataset")
+path = r"C:\Users\admin\PycharmProjects\train_ii\train_pytorch\dataset"
 
 
 
 
 learning_rate = 0.001
 EPOHS = 1
-batch_size = 128
+batch_size = 64
 
 train_data, val_data,test_data = get_data(path, batch_size)
 model = my_model(64*64,2).to(device)
@@ -149,15 +149,14 @@ for i in range(EPOHS):
 
         threshold = 3.0
 
-        correct += torch.sum(torch.abs(pred - target) < threshold).item()
-        total += target.size(0)
-
+        correct += (torch.abs(pred - target) < threshold).sum().item()
+        total += target.size(0) * 2
 
         train_acc.append(correct / total)
 
         train_loop.set_description(f"train Epoch {i+1}"
                                    f" loss: {mean_loss:.4f}"
-                                   f" accuracy: {(correct/(total*2)):.4f}")
+                                   f" accuracy: {(correct/total):.4f}")
 
 
 model.eval()
@@ -178,7 +177,7 @@ with torch.no_grad():
         val_loss.append(loss.item())
         mean_loss = np.mean(epohs_loss)
 
-        total += target.shape[0]
+        total += target.shape[0] * 2
 
         threshold = 3.0
 
@@ -191,7 +190,7 @@ with torch.no_grad():
                                  f"loss: {mean_loss:.1f} "
                                  f"accuracy: {correct/total:.1f} ")
 
-
+torch.save(model.state_dict(), "model_square.pt")
 
 plot(learning_rate,train_loss,val_loss,train_acc,val_acc)
 

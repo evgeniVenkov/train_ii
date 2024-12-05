@@ -105,12 +105,13 @@ class my_model(nn.Module):
 
         return out
 def get_data(Batch_size = 1):
-    path_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\testing')
-    path_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'mnist\training')
+    path = r"C:\Users\admin\PycharmProjects\train_ii\train_pytorch"
+    path_test = os.path.join(path, r'mnist\testing')
+    path_train = os.path.join(path, r'mnist\training')
 
 
     train_dataset = MnistDataset(path_train)
-    test_dataset = MnistDataset(path_test,None,"mnist_dataset_test.pt")
+    test_dataset = MnistDataset(path_test, None, "mnist_dataset_test.pt")
 
     train_data, val_data = random_split(train_dataset, [0.8, 0.2])
 
@@ -139,7 +140,7 @@ def log_():
 
 Batch_size = 128
 LearningRate = 0.001
-EPOHS = 1
+EPOHS = 10
 
 loss_fn = nn.CrossEntropyLoss()
 model = my_model(784,10).to(device)
@@ -236,6 +237,8 @@ mean_count = -100
 log_()
 
 print(f"Elapsed time {end_time - start_time}")
+
+torch.save(model.state_dict(),"model_mnist.pt")
 
 plt.figure(figsize=(8, 5))
 plt.plot(run_train_loss[100:], label="Train Loss", color="blue")

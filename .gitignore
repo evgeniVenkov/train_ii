@@ -2,5 +2,5 @@
 train_pytorch/data/
 train_pytorch/mnist/
 train_pytorch/dataset/
-train_pytorch/mnist_dataset_train.pt
-train_pytorch/mnist_dataset_test.pt
+train_pytorch/model_mnist/mnist_dataset_train.pt
+train_pytorch/model_mnist/mnist_dataset_test.pt

@@ -4,6 +4,10 @@ import pygetwindow as gw
 from PIL import Image
 from torchvision import transforms
 import pyautogui
+import numpy as np
+import torch.nn as nn
+import torch
+
 
 def start():
     # Путь к файлу игры и DOSBox
@@ -16,67 +20,58 @@ def start():
     # Подождать, пока игра загрузится
     time.sleep(3)
 
-    # Получаем окно игры (например, по имени окна)
+    # Получаем окно игры
     window = gw.getWindowsWithTitle('DOSBox')[0]
-
-    # Перемещаем окно в координаты (x, y)
-    window.moveTo(0, 0)
-
-    # Пример: отправляем стрелку вправо, чтобы двигать героя
-    pyautogui.press('right')
-
-    # Захватить экран (проверка состояния)
-    screenshot = pyautogui.screenshot()
-    screenshot.save('screenshot.png')
-    time.sleep(2)
-
-
-    # Указание области захвата (left, top, width, height)
-    screenshot = pyautogui.screenshot(region=(0, 0, 645, 410))
-    screenshot.save('game_screenshot.png')
-
-start()
-
-
+    window.moveTo(0, 0)  # Перемещаем окно в координаты (x, y)
+    return window
 
 
 # Функция для захвата изображения
 def capture_game_screen(region=(0, 0, 645, 410)):
-    # region - координаты области захвата (x, y, ширина, высота)
     screenshot = pyautogui.screenshot(region=region)
     return screenshot
 
+
 # Функция для преобразования изображения в тензор с двумя каналами
 def image_to_tensor(image):
-    # Преобразуем изображение в RGB
-    image_rgb = image.convert("RGB")
-
-    # Получаем отдельные каналы
-    r, g, b = image_rgb.split()
-
-    # Оставляем только красный и зеленый каналы
-    image_two_channels = Image.merge("RGB", (r, g, g))  # Используем два канала: R и G
-
-    # Преобразуем изображение в тензор
     transform = transforms.Compose([
-        transforms.ToTensor(),  # Преобразуем изображение в тензор
+        transforms.Grayscale(num_output_channels=1),  # Преобразуем в черно-белое изображение
+        transforms.ToTensor(),  # Преобразуем в тензор
     ])
+    image_tensor = transform(image)
+    return image_tensor
 
-    image_tensor = transform(image_two_channels)
+class MyModel(nn.Module):
+    def __init__(self, inp, out):
+        super().__init__()
+        self.linear = nn.Linear(inp, 500) #264 450
+        self.act = nn.ReLU()
+        self.linear1 = nn.Linear(500, 100)
+        self.linear2 = nn.Linear(100, out)#6
 
-    return image_tensor[1::]
+    def forward(self, img,):
+        x = self.linear(img)
+        x = self.act(x)
+        x = self.linear1(x)
+        x = self.act(x)
+        return self.linear2(x)
+start()  # Запускаем игру
+actions = ['no_action', 'left', 'right', 'dig', "up", "down"]
+
 
 image = capture_game_screen()
-image_tensor = image_to_tensor(image)
-
-# Проверим результат
-print(image_tensor.shape)
+image_tensor = image_to_tensor(image) #torch.Size([1, 410, 645])
 
 
+# Преобразуем тензор обратно для проверки
+image_array = image_tensor.squeeze(0).numpy()  # Убираем лишнюю ось
+image_back = Image.fromarray((image_array * 255).astype(np.uint8), mode="L")
+
+# Показываем изображение
+image_back.show()
 
 # Параметры для игры
-actions = ['no_action', 'left', 'right', 'dig',"up","down"]
-n_actions = len(actions)
+time.sleep(2)  # Пауза для проверки
 
 
 

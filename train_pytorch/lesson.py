@@ -269,5 +269,36 @@ class MyModel01(nn.Module):
 
 print("CUDA доступен:" if torch.cuda.is_available() else "CUDA не доступен")
 
+inp = 32
+out = 64
+
+h_i = 224
+w_i = 224
+
+pading = (0,0)
+karnel_size = (1,1)
+stride = (1,1)
 
 
+H1 = ((h_i+2*pading[0] -1 *(karnel_size[0]-1)-1)/stride[0])+1
+W1 = ((w_i+2*pading[1]-1*(karnel_size[1]-1)-1)/stride[1])+1
+
+weights = (karnel_size[0] * karnel_size[1]* inp + 1)*out
+print("---------------------")
+print(H1,W1)
+print(weights)
+
+model = nn.Sequential()
+model.add_module("1",nn.Conv2d(3,64,(3,3)))
+model.add_module("1_1",nn.ReLU())
+model.add_module("2",nn.Conv2d(64,64,(3,3)))
+
+
+model = nn.Sequential(nn.Conv2d(1,5,(3,3)),
+                      nn.ReLU(),
+                      nn.Conv2d(5,10,(3,3)),
+                      nn.ReLU(),
+                      nn.Conv2d(10,15,(3,3))
+                      )
+
+print(model)

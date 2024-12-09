@@ -22,4 +22,4 @@ def crop_and_show(image_path, left, top, right, bottom):
 
 
 # Пример использования
-score= crop_and_show("game_screenshot.png", 100, 395, 240, 410)  #
+score= crop_and_show("game_screenshot.png", 310, 395, 420, 410)  #

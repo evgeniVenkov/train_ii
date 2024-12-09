@@ -51,7 +51,7 @@ def start():
 def get_scrin(region=(0, 0, 645, 410)):
     screenshot = pyautogui.screenshot(region=region)
     return screenshot
-# Функция для преобразования изображения в тензор с двумя каналами
+# Функция для преобразования изображения в тензор
 def image_to_tensor(image):
     transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=1),  # Преобразуем в черно-белое изображение
@@ -90,12 +90,27 @@ def show_img(img):
     img = Image.fromarray((img * 255).astype(np.uint8),mode = 'L')
     img.show()
 def get_event(img):
-    imd_score = img.crop((100, 395, 240, 410))
-    return get_score(imd_score)
+    img_score = img.crop((100, 395, 240, 410))
+    img_fine = img.crop((310, 395, 420, 410))
 
+    return [get_score(img_score),get_fine(img_fine)]
+
+def get_fine(img):
+    global fine
+    global heals
+
+    if fine == None:
+        fine = image_to_tensor(img)
+        return False
+    else:
+        new_score = image_to_tensor(img)
+        if not torch.equal(fine, new_score):
+            fine = new_score
+            heals  -= 1
+            return True
+        return False
 def get_score(img):
     global score
-    img.show()
     if score == None:
         score = image_to_tensor(img)
         return False
@@ -106,10 +121,14 @@ def get_score(img):
             return True
         return False
 
-
+def to_inverted_one_hot(tensor):
+    result = torch.ones_like(tensor)  # Создаём тензор из единиц той же формы
+    result[0, torch.argmax(tensor)] = 0  # Находим максимальное значение и заменяем его на 0
+    return result
 
 heals = 7
-score = 0
+fine = None
+
 
 window = start()  # Запускаем игру
 BUTTONS = ['up', 'down', 'left', 'right', 'z', 'x']
@@ -138,31 +157,27 @@ for step in range(1000):  # Задаем число итераций
     # Прямой проход
     output = model(tens)
 
+
     press_button_emulator(output)
     event = get_event(img) # Получение события
 
-    if event:
-        score += 1
-        print(f"[{step}] Успех! Предсказано: {output}")
+    if event[0]:
+
+        print(f"[{step}] Успех!  ")
         loss = criterion(output, output)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         print(f"Обучение на последнем действии. Loss: {loss.item():.4f}")
 
-
-    # else:
-    #     penalty += 1
-    #     print(f"[{step}] Штраф! Предсказано: {output}, Штраф: {penalty}")
-
-        # Таргет известен только в момент штрафа
-
-
-
-        # loss = criterion(output, target)
-        # optimizer.zero_grad()
-        # loss.backward()
-        # optimizer.step()
+    elif event[1]:
+        print(f"[{step}] Неудача! ")
+        target = to_inverted_one_hot(output)
+        loss = criterion(output, target)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        print(f"Обучение на последнем действии. Loss: {loss.item():.4f}")
 
 
 

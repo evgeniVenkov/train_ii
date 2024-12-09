@@ -269,11 +269,11 @@ class MyModel01(nn.Module):
 
 print("CUDA доступен:" if torch.cuda.is_available() else "CUDA не доступен")
 
-inp = 32
-out = 64
+inp = 5
+out = 10
 
-h_i = 224
-w_i = 224
+h_i = 10
+w_i = 10
 
 pading = (0,0)
 karnel_size = (1,1)
@@ -288,6 +288,9 @@ print("---------------------")
 print(H1,W1)
 print(weights)
 
+
+
+
 model = nn.Sequential()
 model.add_module("1",nn.Conv2d(3,64,(3,3)))
 model.add_module("1_1",nn.ReLU())
@@ -301,4 +304,55 @@ model = nn.Sequential(nn.Conv2d(1,5,(3,3)),
                       nn.Conv2d(10,15,(3,3))
                       )
 
-print(model)
+class myConvModel(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.linear = nn.Conv2d(inp,5,(3,3))
+        self.linear1 = nn.Conv2d(5,10,(3,3))
+        self.linear2 = nn.Conv2d(10,out,(3,3))
+        self.act = nn.ReLU()
+    def forward(self,x):
+        x = self.linear(x)
+        x = self.act(x)
+        x = self.act(self.linear1(x))
+        return self.linear2(x)
+model = myConvModel(5,15)
+
+
+class myConvModel2(nn.Module):
+    def __init__(self,inp,):
+        super().__init__()
+        self.linear_left = nn.Conv2d(inp,10,(1,1))
+        self.linear_right = nn.Conv2d(inp,10,(3,3),padding=(1,1))
+        self.act = nn.ReLU()
+    def forward(self,x):
+        x1 = self.act(self.linear_left(x))
+        x2 = self.act(self.linear_right(x))
+        return torch.cat([x1,x2], dim = 1),x1,x2
+
+
+class myConvModel3(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.linear = nn.Conv2d(inp,out,(3,3))
+        self.act = nn.ReLU()
+    def forward(self,x):
+        x = torch.cat(x,dim = 1)
+        return  self.act(self.linear(x))
+
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+mas = []
+
+tensor = [torch.rand(16,4,10,10).to(device),
+        torch.rand(16,3,10,10).to(device),
+        torch.rand(16,3,10,10).to(device),
+        torch.rand(16,3,10,10).to(device),]
+
+
+
+model = myConvModel3(13,10)
+model.to(device)
+
+x = model(tensor)
+print(x.shape)

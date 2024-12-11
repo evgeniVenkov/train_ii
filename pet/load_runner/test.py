@@ -23,8 +23,8 @@ def start():
 # Параметры
 save_folder = "screenshots"  # Папка для сохранения
 region = (0, 0, 645, 410)  # Координаты области (x, y, ширина, высота)
-screenshot_interval = 0.1  # Интервал между скриншотами в секундах
-num_screenshots = 500  # Количество скриншотов
+screenshot_interval = 0.02  # Интервал между скриншотами в секундах
+num_screenshots = 1000  # Количество скриншотов
 
 # Создаём папку, если её нет
 os.makedirs(save_folder, exist_ok=True)

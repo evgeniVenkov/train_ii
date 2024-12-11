@@ -13,7 +13,7 @@ class MyModel(nn.Module):
     def __init__(self, num_classes=6):
         super().__init__()
         # Сверточные слои
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(2, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
 
@@ -102,8 +102,8 @@ train_size = dataset_size - val_size
 train_data, val_data = random_split(data, [train_size, val_size])
 
 # Создаем загрузчики данных
-train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_data, batch_size=1, shuffle=False)
+val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
 
 # model = MyModel().to(device)
 
@@ -114,11 +114,11 @@ loss_list = []
 loss_val = []
 
 model = MyModel().to(device)
-load = torch.load("pet_model.pt")
-model.load_state_dict(load)
+# load = torch.load("pet_model.pt")
+# model.load_state_dict(load)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 
 # model.eval()
@@ -130,12 +130,22 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
 # print(y)
 # exit()
 
+previous_img = None
+previous_target = None
+previous_img_val = None
+previous_target_val = None
 for epoch in range(epochs):
     model.train()
     epoch_loss = 0.0
     loop_data = tqdm(train_loader)
-    loop_val = tqdm(val_loader)
-    for x, target in loop_data:
+    loop_val = tqdm(val_loader,leave=False)
+    for img, target in loop_data:
+        if previous_img is None and previous_target is None:
+            previous_img, previous_target = img, target
+
+        x = torch.cat((img, previous_img), dim=1)
+        previous_img, previous_target = img, target
+
         x = x.to(device)
         target = target.to(device)
 
@@ -154,7 +164,14 @@ for epoch in range(epochs):
 
     model.eval()
     with torch.no_grad():
-        for x, target in loop_val:
+        for img, target in loop_val:
+            if previous_img_val is None and previous_target_val is None:
+                previous_img_val, previous_target_val = img, target
+
+            x = torch.cat((img, previous_img), dim=1)
+            previous_img, previous_target = img, target
+
+
             x = x.to(device)
             target = target.to(device)
             output = model(x)
@@ -170,7 +187,7 @@ for epoch in range(epochs):
 torch.save(model.state_dict(), "pet_model.pt")
 
 plt.plot(loss_list, label="Training Loss")  # График потерь на обучении
-plt.plot(loss_val, label="Validation Loss", linestyle="--")  # График потерь на валидации
+plt.plot(loss_val, label="Validation Loss", linestyle="-")  # График потерь на валидации
 
 plt.title("Training and Validation Loss")
 plt.xlabel("Epoch")

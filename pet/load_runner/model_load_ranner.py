@@ -215,15 +215,23 @@ count = 0
 model.train()
 list_loss = []
 
+#картинки
+previous_img = None
+previous_target = None
+previous_img_val = None
+previous_target_val = None
 
 
 for step in range(100000):
     model.eval()
+    img = get_scrin()  # скрин
+    tens = image_to_tensor(img).to(device)  # тензор
+    if previous_img is None :
+        previous_img = tens
+    x = torch.cat((tens, previous_img),dim=1)
 
-    img = get_scrin() #скин
-    tens = image_to_tensor(img).to(device) # тензор
-    tens = torch.reshape(tens, (1,) + tens.shape)# вектор
-    output = model(tens)# предсказание
+
+    output = model(x)# предсказание
     press_button_emulator(output)# нажатие кнопки
     event = get_event(img) # Получение события
     image_buffer.append(tens)# сохранение вектора

@@ -1,25 +1,39 @@
-from PIL import Image
+import os
+import subprocess
+import pygetwindow as gw
+import pyautogui
+from time import sleep, time
 
 
-def crop_and_show(image_path, left, top, right, bottom):
-    """
-    Вырезает часть изображения и отображает её.
+def start():
+    # Путь к файлу игры и DOSBox
+    dosbox_path = "C:\\Program Files (x86)\\DOSBox-0.74-3\\DOSBox.exe"
+    game_path = "C:\\dendi_game\\lode\\LR.COM"
 
-    :param image_path: Путь к файлу изображения.
-    :param left: Координата левого края вырезаемой области.
-    :param top: Координата верхнего края вырезаемой области.
-    :param right: Координата правого края вырезаемой области.
-    :param bottom: Координата нижнего края вырезаемой области.
-    """
-    # Открываем изображение
-    image = Image.open(image_path)
+    # Запуск DOSBox с игрой
+    subprocess.Popen([dosbox_path, game_path])
 
-    # Вырезаем часть
-    cropped_image = image.crop((left, top, right, bottom))
+    # Подождать, пока игра загрузится
+    sleep(3)
 
-    # Показываем вырезанную часть
-    cropped_image.show()
+    # Получаем окно игры
+    window = gw.getWindowsWithTitle('DOSBox')[0]
+    window.moveTo(0, 0)  # Перемещаем окно в координаты (x, y)
+    return window
+# Параметры
+save_folder = "screenshots"  # Папка для сохранения
+region = (0, 0, 645, 410)  # Координаты области (x, y, ширина, высота)
+screenshot_interval = 0.1  # Интервал между скриншотами в секундах
+num_screenshots = 500  # Количество скриншотов
 
+# Создаём папку, если её нет
+os.makedirs(save_folder, exist_ok=True)
+start()
+# Цикл сохранения скриншотов
+for i in range(1, num_screenshots + 1):
+    screenshot = pyautogui.screenshot(region=region)  # Снимаем скриншот
+    screenshot.save(os.path.join(save_folder, f"0.{i}.png"))  # Сохраняем в файл
+    print(f"Скриншот {i} сохранён.")
+    sleep(screenshot_interval)  # Пауза перед следующим скриншотом
 
-# Пример использования
-score= crop_and_show("game_screenshot.png", 310, 395, 420, 410)  #
+print("Скриншоты успешно сохранены!")

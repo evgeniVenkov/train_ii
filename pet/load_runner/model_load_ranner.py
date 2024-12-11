@@ -1,33 +1,30 @@
 import subprocess
 import time
-
-
 import pygetwindow as gw
 from PIL import Image
+
+from matplotlib import pyplot as plt
 
 from torchvision import transforms
 import pyautogui
 import numpy as np
 import torch.nn as nn
 import torch
-
+from collections import deque
 import torch.nn.functional as F
+
+
+
+torch.autograd.set_detect_anomaly(True)
 def press_button_emulator(one_hot_vector):
-    """
-    Эмулирует нажатие кнопки для эмулятора (DOSBox), используя one-hot вектор.
-
-    :param one_hot_vector: list[int] - One-hot вектор с размером, равным количеству кнопок
-    """
     button_index = torch.argmax(one_hot_vector).item()
-
-
     try:
         button = BUTTONS[button_index]
         print(f"Нажимаем кнопку: {button}")
 
         # Нажать кнопку через pyautogui
         pyautogui.keyDown(button)
-        time.sleep(0.25)  # Удержание
+        time.sleep(0.1)  # Удержание
         pyautogui.keyUp(button)
 
     except:
@@ -47,11 +44,9 @@ def start():
     window = gw.getWindowsWithTitle('DOSBox')[0]
     window.moveTo(0, 0)  # Перемещаем окно в координаты (x, y)
     return window
-# Функция для захвата изображения
 def get_scrin(region=(0, 0, 645, 410)):
     screenshot = pyautogui.screenshot(region=region)
     return screenshot
-# Функция для преобразования изображения в тензор
 def image_to_tensor(image):
     transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=1),  # Преобразуем в черно-белое изображение
@@ -63,7 +58,7 @@ class MyModel(nn.Module):
     def __init__(self, num_classes=6):
         super().__init__()
         # Сверточные слои
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(2, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
 
@@ -94,7 +89,6 @@ def get_event(img):
     img_fine = img.crop((310, 395, 420, 410))
 
     return [get_score(img_score),get_fine(img_fine)]
-
 def get_fine(img):
     global fine
     global heals
@@ -106,7 +100,6 @@ def get_fine(img):
         new_score = image_to_tensor(img)
         if not torch.equal(fine, new_score):
             fine = new_score
-            heals  -= 1
             return True
         return False
 def get_score(img):
@@ -120,70 +113,144 @@ def get_score(img):
             score = new_score
             return True
         return False
+def restart():
+    pass
+def adjust_learning_rate(optimizer, loss, high_lr, low_lr):
+    if loss > high_loss_threshold:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = high_lr
+    elif loss < low_loss_threshold:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = low_lr
+def get_target(hot):
+    index = torch.argmax(hot).item()
+    zero_hot = torch.zeros_like(hot)
 
-def to_inverted_one_hot(tensor):
-    result = torch.ones_like(tensor)  # Создаём тензор из единиц той же формы
-    result[0, torch.argmax(tensor)] = 0  # Находим максимальное значение и заменяем его на 0
-    return result
+    if index == 0:
+        zero_hot[0,1] = 0.9
+        zero_hot[0, 2] = 0.4
+        zero_hot[0, 4] = 0.3
+    elif index == 1:
+        zero_hot[0,0] = 0.9
+        zero_hot[0, 2] = 0.3
+        zero_hot[0, 5] = 0.3
+        zero_hot[0, 4] = 0.3
+    elif index == 2:
+        zero_hot[0,1] = 0.9
+        zero_hot[0,0] = 0.9
+    elif index == 3:
+        zero_hot[0, 1] = 0.9
+        zero_hot[0, 0] = 0.7
+        zero_hot[0, 2] = 0.7
 
-heals = 7
-fine = None
+    return zero_hot.to(torch.float32)
+def train_fail(model,out_buffer,image_buffer,loss_fn,optimizer):
+    global list_loss
+    model.train()
+    for i, el in enumerate(out_buffer):
+        out = model(image_buffer[i])
+        target = get_target(el)
+        loss = loss_fn(out, target)
+        adjust_learning_rate(optimizer,loss,0.005,0.0001)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        list_loss.append(loss.item())
+    return model
+def train_sucess(model,out_buffer,image_buffer,loss_fn,optimizer):
+    global list_loss
+    model.train()
+    for i, el in enumerate(out_buffer):
+        old = torch.zeros_like(el)
+        old[0,el.argmax()] = 0.9
+        out = model(image_buffer[i])
+        loss = loss_fn(out,old)
+        adjust_learning_rate(optimizer,loss,0.005,0.0001)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        list_loss.append(loss.item())
+    return model
+def plot_loss(list_loss):
 
+    if len(list_loss) > 10:
+        list_loss = list_loss[int(len(list_loss) * 0.2):]
+    plt.close('all')
+    plt.figure(figsize=(10, 5))
+    plt.plot(list_loss, label='Loss')
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss Value')
+    plt.title(f"{'Loss: '.join(f'{i:.3f}' for i in list_loss[-4:])}")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 window = start()  # Запускаем игру
-BUTTONS = ['up', 'down', 'left', 'right', 'z', 'x']
+BUTTONS = ['left','right','up', 'down','num7', 'num9']
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+buffer_size = 30
+image_buffer = deque(maxlen=buffer_size)  # Хранит скриншоты
+out_buffer = deque(maxlen=buffer_size)
 
 model = MyModel().to(device)
+load = torch.load("pet_model.pt")
+model.load_state_dict(load)
+
+#штуки со скоростью
+lr = 0.001
+high_loss_threshold = 2.0
+low_loss_threshold = 1.1
+
 
 # Оптимизатор и функция потерь
-criterion = nn.CrossEntropyLoss ()  # Для one-hot вектора
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+loss_fn = nn.CrossEntropyLoss ()  # Для one-hot вектора
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 # Счетчики
 score = None  # Очки
-penalty = 0  # Штраф
+heals = 5
+fine = None # Штраф
+count = 0
 model.train()
-# Обучающий цикл
-for step in range(1000):  # Задаем число итераций
-
-    img = get_scrin()
-    tens = image_to_tensor(img).to(device)
-
-    tens = torch.reshape(tens, (1,) + tens.shape)
+list_loss = []
 
 
-    # Прямой проход
-    output = model(tens)
 
+for step in range(100000):
+    model.eval()
 
-    press_button_emulator(output)
+    img = get_scrin() #скин
+    tens = image_to_tensor(img).to(device) # тензор
+    tens = torch.reshape(tens, (1,) + tens.shape)# вектор
+    output = model(tens)# предсказание
+    press_button_emulator(output)# нажатие кнопки
     event = get_event(img) # Получение события
-
-    if event[0]:
-
-        print(f"[{step}] Успех!  ")
-        loss = criterion(output, output)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(f"Обучение на последнем действии. Loss: {loss.item():.4f}")
-
-    elif event[1]:
-        print(f"[{step}] Неудача! ")
-        target = to_inverted_one_hot(output)
-        loss = criterion(output, target)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(f"Обучение на последнем действии. Loss: {loss.item():.4f}")
+    image_buffer.append(tens)# сохранение вектора
+    out_buffer.append(output)# сохранение предсказания
 
 
+    if event[1]:
+        print(f"[{step}] Неудача! Жизни {heals}")
+        heals -= 1
+        model = train_fail(model,out_buffer,image_buffer,loss_fn,optimizer)
+        image_buffer.clear()
+        out_buffer.clear()
+        count +=1
+
+    elif event[0]:
+        print(f"[{step}] Успех!")
+        model = train_sucess(model,out_buffer,image_buffer,loss_fn,optimizer)
+
+        count +=1
+
+    if count >= 5:
+        count = 0
+        plot_loss(list_loss)
 
 
 
-# написать окно вида от лица нейронки
+
 
 
 

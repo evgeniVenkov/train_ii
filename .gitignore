@@ -2,8 +2,12 @@
 train_pytorch/data/
 train_pytorch/mnist/
 train_pytorch/dataset/
+pet/model/
+pet/load_runner/data/
+pet/load_runner/screenshots/
+
+
 train_pytorch/model_mnist/mnist_dataset_train.pt
 train_pytorch/model_mnist/mnist_dataset_test.pt
-pet/load_runner/data
-pet/load_runner/screenshots
-pet/load_runner/pet_model.pt
+
+

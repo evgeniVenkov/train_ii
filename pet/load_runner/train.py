@@ -11,7 +11,7 @@ from tqdm import tqdm
 import re
 
 class MyDynamicModelWithStep(nn.Module):
-    def __init__(self, input_channels=3, hidden_size=128, num_classes=6):
+    def __init__(self, input_channels=1, hidden_size=128, num_classes=6):
         super(MyDynamicModelWithStep, self).__init__()
         # Извлечение начальных признаков из входных изображений
         self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, padding=1)  # Извлекает начальные признаки
@@ -47,8 +47,11 @@ class MyDynamicModelWithStep(nn.Module):
         _, (hidden, _) = self.rnn(x)  # Получаем скрытое состояние последнего слоя
         hidden = hidden[-1]  # Используем последнее скрытое состояние
 
-        # Пропускаем шаг через полносвязный слой
-        step = step.unsqueeze(1).float()  # Преобразуем шаг в форму [batch_size, 1]
+
+        step = torch.tensor(step).unsqueeze(0).float()  # Преобразуем в тензор и добавляем размерность по оси 0
+        step = step.to(device)
+        step = step.unsqueeze(1)
+
         step = F.relu(self.fc_step(step))  # Обрабатываем шаг
 
         # Объединяем скрытое состояние и шаг
@@ -57,7 +60,6 @@ class MyDynamicModelWithStep(nn.Module):
         # Пропускаем через полносвязный слой для предсказания
         out = self.fc(combined)  # Выходной результат, представляющий предсказание класса
         return out
-
 class SequentialDataset(Dataset):
     def __init__(self, path, transform=None):
         self.path = path
@@ -103,8 +105,6 @@ class SequentialDataset(Dataset):
         sample = self.data_list[idx]
         target = self.targets[idx]
         return sample, target
-
-
 class val_dataset(Dataset):
     def __init__(self, ):
         self.data = []
@@ -119,8 +119,12 @@ class val_dataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx], self.targets[idx]
+def show_img(img):
+    img = img.squeeze(0).numpy()
+    img = Image.fromarray((img * 255).astype(np.uint8),mode = 'L')
+    img.show()
 
-
+step = 0.0
 # Определяем параметры устройства и загрузчика данных
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -143,42 +147,22 @@ for i ,(img,target) in enumerate(data):
         continue
     data_train.add_data(img, target)
 
-print(len(data_val))
-print(len(data_train))
-exit()
 
 
-
-data_loader = DataLoader(data, batch_size=1, shuffle=False)
-
-
-# Укажите размеры тренировочного и валидационного наборов
-validation_split = 0.2  # 20% данных для валидации
-dataset_size = len(data)
-val_size = int(dataset_size * validation_split)
-train_size = dataset_size - val_size
-
-# Разделение на тренировочный и валидационный наборы
-train_data, val_data = random_split(data, [train_size, val_size])
-
-# Создаем загрузчики данных
-train_loader = DataLoader(train_data, batch_size=1, shuffle=False)
-val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
-
-# model = MyModel().to(device)
+train_loader = DataLoader(data_train, batch_size=1, shuffle=False)
+val_loader = DataLoader(data_val, batch_size=1, shuffle=False)
 
 
-
-epochs = 20
+epochs = 5
 loss_list = []
 loss_val = []
 
-model = MyModel().to(device)
+model = MyDynamicModelWithStep().to(device)
 # load = torch.load("pet_model.pt")
 # model.load_state_dict(load)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
 
 
 # model.eval()
@@ -190,28 +174,36 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 # print(y)
 # exit()
 
-previous_img = None
+history_img = None
 previous_target = None
 previous_img_val = None
 previous_target_val = None
+
 for epoch in range(epochs):
     model.train()
     epoch_loss = 0.0
     loop_data = tqdm(train_loader)
     loop_val = tqdm(val_loader,leave=False)
+
     for img, target in loop_data:
-        if previous_img is None and previous_target is None:
-            previous_img, previous_target = img, target
+        if history_img is None:
+            history_img  = img
+            history_img = history_img.to(device)
+            history_img = history_img.unsqueeze(1)
 
-        x = torch.cat((img, previous_img), dim=1)
-        previous_img, previous_target = img, target
+        step += 1.0
 
-        x = x.to(device)
+        img = img.to(device)
+        img = img.unsqueeze(1)
         target = target.to(device)
 
+        if history_img.shape[1] >= 20:
+            history_img = torch.cat((history_img[:,1:],img),dim= 1)
+        else:
+            history_img = torch.cat((history_img,img), dim=1)
 
-        output = model(x)
 
+        output = model(history_img, step)
 
         loss = loss_fn(output, target)
         epoch_loss += loss.item()
@@ -222,33 +214,43 @@ for epoch in range(epochs):
         optimizer.step()
         loop_data.set_description(f"Epoch {epoch+1}/{epochs}; Loss {loss.item():.4f}")
 
+    step = 1.0
+    history_img = None
     model.eval()
     with torch.no_grad():
         for img, target in loop_val:
-            if previous_img_val is None and previous_target_val is None:
-                previous_img_val, previous_target_val = img, target
+            if history_img is None:
+                history_img = img
+                history_img = history_img.to(device)
+                history_img = history_img.unsqueeze(1)
 
-            x = torch.cat((img, previous_img), dim=1)
-            previous_img, previous_target = img, target
+            step += 1.0
 
+            img = img.to(device)
+            img = img.unsqueeze(1)
 
-            x = x.to(device)
             target = target.to(device)
-            output = model(x)
+
+            if history_img.shape[1] >= 20:
+                history_img = torch.cat((history_img[:, 1:], img), dim=1)
+            else:
+                history_img = torch.cat((history_img, img), dim=1)
+
+            output = model(history_img,step)
             loss = loss_fn(output, target)
             loss_val.append(loss.item())
             loop_val.set_description(f"Validation Loss {loss.item():.4f}")
 
-    avg_loss = epoch_loss / len(data_loader)
+    history_img = None
+    avg_loss = epoch_loss / len(train_loader)
     loss_list.append(avg_loss)
     print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
 
 
-torch.save(model.state_dict(), "pet_model.pt")
+torch.save(model.state_dict(), "../model/pet_model.pt")
 
 plt.plot(loss_list, label="Training Loss")  # График потерь на обучении
 plt.plot(loss_val, label="Validation Loss", linestyle="-")  # График потерь на валидации
-
 plt.title("Training and Validation Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")

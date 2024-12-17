@@ -269,14 +269,14 @@ class MyModel01(nn.Module):
 
 print("CUDA доступен:" if torch.cuda.is_available() else "CUDA не доступен")
 
-inp = 5
-out = 10
+inp = 20
+out = 50
 
-h_i = 10
-w_i = 10
+h_i = 641
+w_i = 406
 
 pading = (0,0)
-karnel_size = (1,1)
+karnel_size = (3,3)
 stride = (1,1)
 
 
@@ -316,9 +316,6 @@ class myConvModel(nn.Module):
         x = self.act(x)
         x = self.act(self.linear1(x))
         return self.linear2(x)
-model = myConvModel(5,15)
-
-
 class myConvModel2(nn.Module):
     def __init__(self,inp,):
         super().__init__()
@@ -329,8 +326,6 @@ class myConvModel2(nn.Module):
         x1 = self.act(self.linear_left(x))
         x2 = self.act(self.linear_right(x))
         return torch.cat([x1,x2], dim = 1),x1,x2
-
-
 class myConvModel3(nn.Module):
     def __init__(self,inp,out):
         super().__init__()
@@ -339,20 +334,162 @@ class myConvModel3(nn.Module):
     def forward(self,x):
         x = torch.cat(x,dim = 1)
         return  self.act(self.linear(x))
+class myConvModel4(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.Conv = nn.Conv2d(inp,out,(3,3),(1,1),(1,1),bias=False)
+        self.act  = nn.ReLU()
+        self.batchnorm = nn.BatchNorm2d(out)
 
+    def forward(self,x):
+        x = self.Conv(x)
+        x = self.act(self.batchnorm(x))
+        return x
+class myConvModel5(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.Conv = nn.Conv2d(inp,10,(1,1),bias=False)
+        self.act = nn.ReLU()
+        self.batchnorm = nn.BatchNorm2d(10)
+        self.Conv1 = nn.Conv2d(10,out,(3,3),(1,1),(1,1),bias=False)
+        self.batchnorm1 = nn.BatchNorm2d(out)
+    def forward(self,x):
+        x = self.batchnorm(self.Conv(x))
+        x = self.Conv1(self.act(x))
+        x = self.act(self.batchnorm1(x))
+        return x
+class myConvModel6(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.conv1 = nn.Conv2d(inp, 10,(3,3),padding = (1,1),bias = False)
+        self.batchnorm = nn.BatchNorm2d(10)
+        self.act = nn.ReLU()
+        self.conv2 = nn.Conv2d(10,out,(3,3),padding = (1,1),bias = False)
+    def forward(self,x):
+        x1 = self.batchnorm(self.conv1(x))
+        x1 = self.conv2(self.act(x1))
+        x1= self.batchnorm(x1)
+        x = self.act(x + x1)
+        return x
+class myConvModel7(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.down = nn.Sequential(nn.Conv2d(10,10,(1,1),(2,2),bias = False),
+                                  nn.BatchNorm2d(10))
+        self.main = nn.Sequential(nn.Conv2d(inp,10,(3,3),(2,2),(1,1),bias = False),
+                                  nn.BatchNorm2d(10),
+                                  nn.ReLU(),
+                                  nn.Conv2d(10,out,(3,3),padding = (1,1), bias = False),
+                                  nn.BatchNorm2d(out))
+        self.act = nn.ReLU()
+    def forward(self,x):
+        x1 = self.main(x)
+        x2 = self.down(x)
+        return self.act(x1 + x2)
+class Bottleneck(nn.Module):
+    def __init__(self, inp, out):
+        super().__init__()
+        self.main = nn.Sequential(nn.Conv2d(inp, 7, (1, 1), bias=False),
+                                  nn.BatchNorm2d(7),
+                                  nn.ReLU(),
+                                  nn.Conv2d(7, 7, (3, 3), padding=(1, 1), bias=False),
+                                  nn.BatchNorm2d(7),
+                                  nn.ReLU(),
+                                  nn.Conv2d(7, out, (1, 1), bias=False),
+                                  nn.BatchNorm2d(out))
+        self.act = nn.ReLU()
+
+    def forward(self, x):
+        x1 = self.main(x)
+        return self.act(x + x1)
+class MyModel(nn.Module):
+    def __init__(self, inp, out):
+        super().__init__()
+        self.one = nn.Sequential(nn.Conv2d(inp, 5, (3, 3)),
+                                 nn.ReLU(),
+                                 nn.Conv2d(5, 5, (3, 3), padding=(1, 1)),
+                                 nn.ReLU())
+        self.linear = nn.Linear(out, 10)
+
+    def forward(self, x):
+        x = self.one(x)
+        x = x.flatten(start_dim=1)
+        return self.linear(x)
+class BasicBlock(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.down = nn.Sequential(nn.Conv2d(1,1,(1,1),(2,2),bias = False),
+                                  nn.BatchNorm2d(1))
+        self.main = nn.Sequential(nn.Conv2d(inp,7,(1,1),bias = False),
+                                  nn.BatchNorm2d(7),
+                                  nn.ReLU(),
+                                  nn.Conv2d(7, 7, (3, 3),(2,2),(1,1), bias=False),
+                                  nn.BatchNorm2d(7),
+                                  nn.ReLU(),
+                                  nn.Conv2d(7,out,(1,1), bias = False),
+                                  nn.BatchNorm2d(out))
+        self.act = nn.ReLU()
+    def forward(self,x):
+        x1 = self.main(x)
+        x2 = self.down(x)
+        return self.act(x1 + x2)
+class pool(nn.Module):
+    def __init__(self,inp):
+        super().__init__()
+        self.run = nn.Sequential(nn.Conv2d(inp,5,(7,7),(2,2),(3,3),bias = False),
+                                 nn.BatchNorm2d(5),
+                                 nn.ReLU(),
+                                 nn.MaxPool2d((3,3),(2,2),(1,1)))
+    def forward(self,x):
+        return self.run(x)
+
+class Transition(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.run = nn.Sequential(nn.BatchNorm2d(inp),
+                                 nn.ReLU(),
+                                 nn.Conv2d(inp,out,(1,1),bias = False))
+                                 # nn.AvgPool2d((2,2),2))
+    def forward(self,x):
+        return self.run(x)
+
+class ModelAverage(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.run = nn.Sequential(nn.Conv2d(inp,out,(3,3),padding=(1,1),bias = False),
+                                 nn.BatchNorm2d(out),
+                                 nn.ReLU(),
+                                 nn.AvgPool2d((10,10)))
+    def forward(self,x):
+        return self.run(x)
+
+class FinalModel(nn.Module):
+    def __init__(self,inp,out):
+        super().__init__()
+        self.one = nn.Sequential(nn.Conv2d(inp,10,(3,3),bias = False),
+                                 nn.BatchNorm2d(10),
+                                 nn.ReLU(),
+                                 nn.AvgPool2d((8,8)))
+        self.linear = nn.Linear(10,out)
+
+    def forward(self,x):
+        x = self.one(x)
+        x = x.flatten(start_dim=1)
+        return self.linear(x)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 mas = []
 
-tensor = [torch.rand(16,4,10,10).to(device),
-        torch.rand(16,3,10,10).to(device),
-        torch.rand(16,3,10,10).to(device),
-        torch.rand(16,3,10,10).to(device),]
 
-
-
-model = myConvModel3(13,10)
-model.to(device)
+model = FinalModel(5,5).to(device)
+tensor = torch.rand(1,5,10,10).to(device)
 
 x = model(tensor)
+print(x.shape)
+exit()
+
+
+x = model(tensor)
+summary(model, input_size=(5, 150, 150))
+
 print(x.shape)

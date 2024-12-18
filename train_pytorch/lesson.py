@@ -272,12 +272,12 @@ print("CUDA доступен:" if torch.cuda.is_available() else "CUDA не до
 inp = 20
 out = 50
 
-h_i = 641
-w_i = 406
+h_i = 197
+w_i = 297
 
 pading = (0,0)
-karnel_size = (3,3)
-stride = (1,1)
+karnel_size = (1,1)
+stride = (2,2)
 
 
 H1 = ((h_i+2*pading[0] -1 *(karnel_size[0]-1)-1)/stride[0])+1
@@ -288,7 +288,7 @@ print("---------------------")
 print(H1,W1)
 print(weights)
 
-
+exit()
 
 
 model = nn.Sequential()
@@ -442,7 +442,6 @@ class pool(nn.Module):
                                  nn.MaxPool2d((3,3),(2,2),(1,1)))
     def forward(self,x):
         return self.run(x)
-
 class Transition(nn.Module):
     def __init__(self,inp,out):
         super().__init__()
@@ -452,7 +451,6 @@ class Transition(nn.Module):
                                  # nn.AvgPool2d((2,2),2))
     def forward(self,x):
         return self.run(x)
-
 class ModelAverage(nn.Module):
     def __init__(self,inp,out):
         super().__init__()
@@ -462,7 +460,6 @@ class ModelAverage(nn.Module):
                                  nn.AvgPool2d((10,10)))
     def forward(self,x):
         return self.run(x)
-
 class FinalModel(nn.Module):
     def __init__(self,inp,out):
         super().__init__()

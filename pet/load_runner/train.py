@@ -247,7 +247,7 @@ for epoch in range(epochs):
     print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}")
 
 
-torch.save(model.state_dict(), "../model/pet_model.pt")
+torch.save(model.state_dict(), "model/pet_model.pt")
 
 plt.plot(loss_list, label="Training Loss")  # График потерь на обучении
 plt.plot(loss_val, label="Validation Loss", linestyle="-")  # График потерь на валидации

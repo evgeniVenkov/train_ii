@@ -1,20 +1,19 @@
 import pandas as pd
 import numpy as np
 
-l = np.ones((3,3))
-
-df = pd.DataFrame(l,index = ['A','B','C'])
-
 
 # Создайте DataFrame.
-dict_in = {'age':[88,99,13],
-            'стаж работы': [1, 2, 3],
-           'зарплата': [4, 5, 6]}
+dict_in = {'age':[88,99,13,22,17,36],
+            'стаж работы': [1, 2, 3,None,5,6],
+           'зарплата': [40000, 50000, 60000,33000,27000,11000]}
 
 
 df = pd.DataFrame(dict_in)
 
-new_df = df * [1,12,1000]
-new_df['age'] += 1900
+df.dropna()
+#поиск и замена нан
+df.fillna(value={"age":1,
+                 "стаж работы":"NO"}, inplace=True)
 
-print(new_df)
+df.query("`зарплата` > 35000")
+

@@ -7,12 +7,14 @@ df = pd.DataFrame(l,index = ['A','B','C'])
 
 
 # Создайте DataFrame.
-dict_in = {'col_1': [1, 2, 3],
-           'col_2': [4, 5, 6],
-           'col_3': [7, 8, 9],
-           'col_4': [10, 11, 12]}
-
-df = pd.DataFrame(dict_in)[['col_1', 'col_3']]
-print(df)
+dict_in = {'age':[88,99,13],
+            'стаж работы': [1, 2, 3],
+           'зарплата': [4, 5, 6]}
 
 
+df = pd.DataFrame(dict_in)
+
+new_df = df * [1,12,1000]
+new_df['age'] += 1900
+
+print(new_df)

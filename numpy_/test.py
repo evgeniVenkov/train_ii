@@ -1,15 +1,11 @@
 import numpy as np
 
+cords =np.empty([10,4,2])
+new_cords = np.empty([10,2])
 
+print(cords.shape)
+print(new_cords.shape)
 
+new_arr = np.concatenate((cords, new_cords[:, None, :]), axis=1)
 
-
-
-
-mat_A = np.resize(np.arange(0,50,5),(10,10)).T
-
-
-print(" max ---------------------")
-
-print(mat_A)
-
+print(new_arr.shape)

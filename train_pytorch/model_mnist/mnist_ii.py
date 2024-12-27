@@ -151,8 +151,6 @@ lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.01, pati
 train_data,val_data,test_data = get_data(Batch_size)
 
 
-
-
 run_train_loss = []
 run_val_loss = []
 accuracy_train =[]

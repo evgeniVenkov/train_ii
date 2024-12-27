@@ -50,7 +50,6 @@ def func2(ser):
         ser = 'Не оплачено'
 
     return ser
-
 def func3(row, prod = None):
     if prod == None:
         if row['buy'] == True:
@@ -77,6 +76,91 @@ new_df = correct.agg([np.sum, np.mean])
 
 df.fillna(value= 0, inplace=True)
 new_df = df.agg(sum_solved=("5",np.sum),mean_solved=("5",np.mean))
-print(new_df)
+# --------------------------------------------------------------------------------------------------
+def getdf():
+    N_client = 10
+    N_product = 15
+
+    client = {i: f'client_{i}' for i in range(N_client)}
+    product = {i: f'product_{i}' for i in range(N_product )}
+    price = {i: (i+1)*1000 for i in range(N_product)}
+
+    client_list = np.random.randint(0, N_client, 100)
+    product_list = np.random.randint(0, N_product , 100)
+
+    df = pd.DataFrame({'client': client_list,
+                       'product': product_list,
+                       'price': product_list}).replace({'client': client, 'product': product, 'price': price})
+    return df
+
+df = getdf()
+new_ser = df.groupby('client')['price'].sum()
+new_ser = df.groupby('client')['product'].count()
+new_ser1 = df['client'].value_counts().sort_index()
+
+new_df = df.groupby(['client', 'product']).size().reset_index(name='count')
+
+new_df = df.groupby('product').agg(count=('product', 'size'),
+                                   sum_price=('price', 'sum'))
+
+new_ser = df.groupby('product')['client'].unique()
+
+new_df = df.groupby('client').apply(
+    lambda group: pd.Series({'product_2': (group['product'] == 'product_2').sum()})
+)
 
 
+new_df = df.groupby('client').apply(
+    lambda group: pd.Series({
+        'product_3': (group['product'] == 'product_3').sum(),
+        'sum_price': group.loc[group['product'] == 'product_3', 'price'].sum()
+    })
+)
+
+df = pd.read_csv('users.csv')
+pc_users = df[df['device'] == 'PC']['user'].unique()
+user_list = [user for user in pc_users if all(df[(df['user'] == user)]['device'] == 'PC')]
+
+user_list = df.groupby('user')['device'].nunique()
+user_list = user_list[user_list >= 3].index.tolist()
+
+df = pd.read_csv('users_action.csv')
+
+new_df = df[df['device'] == 'phone']
+new_df = new_df.groupby('user')['action'].apply(lambda x: (x == True).sum()).reset_index(name='action_True')
+new_df.set_index('user', inplace=True)
+
+
+# ---------------------------------------------------------------------------------------
+def get_new_df():
+    N_client = 10
+    N_product = 15
+
+    client_1 = {i: f'client_{i}' for i in range(N_client)}
+    client_2 = {i: f'client_{i}' for i in range(3, N_client + 3)}
+
+    data_product = {i: f'product_{i}' for i in range(N_product)}
+    price_1 = {i: (i + 1) * 1000 for i in range(15)}
+    price_2 = {i: (i + 1) * 900 for i in range(15)}
+
+    client_list_1 = np.random.randint(0, N_client, 100)
+    client_list_2 = np.random.randint(3, N_client + 3, 100)
+
+    product_list = np.random.randint(0, N_product, 100)
+
+    shop_1 = pd.DataFrame({'client': client_list_1,
+                           'product': product_list,
+                           'price': product_list}).replace(
+        {'client': client_1, 'product': data_product, 'price': price_1})
+    shop_2 = pd.DataFrame({'client': client_list_2,
+                           'product': product_list,
+                           'price': product_list}).replace(
+        {'client': client_2, 'product': data_product, 'price': price_2})
+    product = pd.DataFrame({'product': data_product.values(),
+                            'color': np.random.choice(['black', 'red', 'green', 'white', 'blue'], 15),
+                            'weight': np.random.randint(10, 20, 15) * 10})
+    return shop_1, shop_2, product
+
+df_shop_1, df_shop_2, df_product = get_new_df()
+
+print(df_shop_1.head())

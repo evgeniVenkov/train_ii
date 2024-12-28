@@ -64,7 +64,7 @@ def func3(row, prod = None):
 df['price'] = df.apply(func3 , axis=1)
 
 
-df = pd.read_csv('stud.csv')
+df = pd.read_csv('data/stud.csv')
 count_tru = 50 - df.set_index('name').sum(axis=1)
 count_nan = 50 - df.set_index('name').count(axis= 1)
 new_ser = count_tru -count_nan
@@ -117,14 +117,14 @@ new_df = df.groupby('client').apply(
     })
 )
 
-df = pd.read_csv('users.csv')
+df = pd.read_csv('data/users.csv')
 pc_users = df[df['device'] == 'PC']['user'].unique()
 user_list = [user for user in pc_users if all(df[(df['user'] == user)]['device'] == 'PC')]
 
 user_list = df.groupby('user')['device'].nunique()
 user_list = user_list[user_list >= 3].index.tolist()
 
-df = pd.read_csv('users_action.csv')
+df = pd.read_csv('data/users_action.csv')
 
 new_df = df[df['device'] == 'phone']
 new_df = new_df.groupby('user')['action'].apply(lambda x: (x == True).sum()).reset_index(name='action_True')

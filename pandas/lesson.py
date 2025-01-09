@@ -164,3 +164,19 @@ def get_new_df():
 df_shop_1, df_shop_2, df_product = get_new_df()
 
 print(df_shop_1.head())
+
+dates = pd.date_range(start='2020-01-01', end='2025-01-01', periods=100)
+income = np.random.randint(1000, 10000, size=100)
+
+df = pd.DataFrame({
+    'date': dates,
+    'salary': income
+})
+
+df['date'] = pd.to_datetime(df['date'])
+df['month'] = df['date'].dt.to_period('M')
+print(df.head())
+
+new_df = df.groupby('month')['salary'].sum().reset_index()
+new_df['month'] = pd.to_datetime(new_df['month'].astype(str), format='%Y-%m').dt.month
+print(new_df.head())

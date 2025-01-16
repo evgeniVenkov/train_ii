@@ -18,6 +18,8 @@ pet/boston_price/data
 
 pet/prognoz_student/data
 
+pet/X/model.pt
+
 pandas/data
 
 

@@ -16,7 +16,8 @@ def print_game(board):
           f'------\n'
           f'{game[3]}|{game[4]}|{game[5]}\n'
           f'------\n'
-          f'{game[6]}|{game[7]}|{game[8]}')
+          f'{game[6]}|{game[7]}|{game[8]}\n'
+          f'-------------------------------------')
 def game_status(board):
 
     if board[0] == 1 and board[1] == 1 and board[2] == 1:
@@ -71,25 +72,33 @@ def random_bot(board):
         board[move] = -1
     return board
 
-board = [0,0,0,0,0,0,0,0,0]
 
-def game_step():
-    global board
-    print_game(board)
+
+def game_step(board):
 
     status = game_status(board)
+
     if status == 1:
         print_game(board)
         print("Viсtory!\n")
         board = [0,0,0,0,0,0,0,0,0]
+        return board,status
 
     board = random_bot(board)
     status = game_status(board)
+
     if status == -1:
         print_game(board)
         print("loss!\n")
         board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        return board,status
 
     if board.count(0) == 0:
+        print_game(board)
         print("Draw!")
         board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        status = 2
+        return board,status
+
+    print_game(board)
+    return board, status

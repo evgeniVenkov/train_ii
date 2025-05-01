@@ -1,13 +1,9 @@
 import torch
-
 from torchvision.transforms import v2
 import torch.nn as nn
-
 from torch.utils.data import Dataset, DataLoader, random_split
-
 import os
 import numpy as np
-
 import matplotlib.pyplot as plt
 from PIL import Image
 import json
@@ -36,7 +32,6 @@ class squareDataset(Dataset):
         path = os.path.join(self.path, name)
 
         img = np.array(Image.open(path))
-
 
         coords = torch.tensor(self.dir_cords[name])
 

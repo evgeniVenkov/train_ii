@@ -102,7 +102,6 @@ class my_model(nn.Module):
         x = self.layer1(x)
         x = self.act(x)
         out = self.layer2(x)
-
         return out
 def get_data(Batch_size = 1):
     path = r"C:\Users\admin\PycharmProjects\train_ii\train_pytorch"
@@ -150,7 +149,6 @@ lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.01, pati
 
 train_data,val_data,test_data = get_data(Batch_size)
 
-
 run_train_loss = []
 run_val_loss = []
 accuracy_train =[]
@@ -159,7 +157,6 @@ accuracy_val =[]
 start_time = time.time()
 
 for i in range(EPOHS):
-
     model.train()
 
     train_loop = tqdm(train_data, leave = True)
@@ -167,23 +164,18 @@ for i in range(EPOHS):
     total = 0
     for x, target in train_loop:
 
-
-
         x = x.reshape(-1,28*28).to(device)
         target = target.reshape(-1)
         target = torch.eye(10)[target].to(device).to(torch.float32)
-
 
         pred = model(x)
 
         correct += (pred.argmax(dim =1) == target.argmax(dim = 1)).sum().item()
         total += target.size(0)
 
-
         loss = loss_fn(pred,target)
         opt.zero_grad()
         loss.backward()
-
 
         opt.step()
         if i > 3:
@@ -219,8 +211,6 @@ for i in range(EPOHS):
             accuracy_val.append(correct/total)
 
             loss = loss_fn(pred,target)
-
-
 
             run_val_loss.append(loss.item())
             mean_val_loss = sum(run_val_loss)/len(run_val_loss)
